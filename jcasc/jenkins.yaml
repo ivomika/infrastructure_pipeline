@@ -1,0 +1,157 @@
+jenkins:
+  systemMessage: "Minimal Jenkins in Docker managed by JCasC"
+  numExecutors: 0
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  nodes:
+    - permanent:
+        name: "backend-agent"
+        labelString: "backend maven"
+        mode: EXCLUSIVE
+        nodeDescription: "Backend build agent with Maven and JDK 17"
+        numExecutors: 2
+        remoteFS: "/home/jenkins/agent"
+        retentionStrategy: "always"
+        launcher:
+          ssh:
+            host: "backend-agent"
+            port: 22
+            credentialsId: "agent-ssh-password"
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+    - permanent:
+        name: "flutter-agent"
+        labelString: "flutter mobile"
+        mode: EXCLUSIVE
+        nodeDescription: "Flutter build agent with Flutter SDK and JDK 17"
+        numExecutors: 1
+        remoteFS: "/home/jenkins/agent"
+        retentionStrategy: "always"
+        launcher:
+          ssh:
+            host: "flutter-agent"
+            port: 22
+            credentialsId: "agent-ssh-password"
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+
+unclassified:
+  location:
+    url: "${JENKINS_URL}"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              id: "agent-ssh-password"
+              scope: SYSTEM
+              username: "${AGENT_SSH_USERNAME}"
+              password: "${AGENT_SSH_PASSWORD}"
+              description: "Local Docker agent SSH credentials"
+
+jobs:
+  - script: >
+      pipelineJob('backend-smoke') {
+        description('Runs a Maven smoke pipeline on the backend agent')
+        definition {
+          cps {
+            script("""
+              pipeline {
+                agent { label 'backend' }
+
+                options {
+                  ansiColor('xterm')
+                  buildDiscarder(logRotator(numToKeepStr: '10'))
+                  disableConcurrentBuilds()
+                  timeout(time: 15, unit: 'MINUTES')
+                  timestamps()
+                }
+
+                stages {
+                  stage('Tooling') {
+                    steps {
+                      sh 'java -version'
+                      sh 'mvn -version'
+                      sh 'sqlite3 --version'
+                    }
+                  }
+
+                  stage('Build') {
+                    steps {
+                      writeFile file: 'pom.xml', text: '''<project xmlns="http://maven.apache.org/POM/4.0.0"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>demo</groupId>
+                        <artifactId>backend-smoke</artifactId>
+                        <version>1.0.0</version>
+                      </project>'''
+                      sh 'mvn -q -B help:evaluate -Dexpression=project.artifactId -DforceStdout'
+                      sh "sqlite3 smoke.db 'create table if not exists health(id integer primary key, name text); insert into health(name) values (\\'backend\\'); select count(*) from health;'"
+                    }
+                  }
+                }
+
+                post {
+                  cleanup {
+                    cleanWs(deleteDirs: true, disableDeferredWipeout: true)
+                  }
+                }
+              }
+            """.stripIndent())
+            sandbox()
+          }
+        }
+      }
+  - script: >
+      pipelineJob('flutter-smoke') {
+        description('Runs a Flutter smoke pipeline on the flutter agent')
+        definition {
+          cps {
+            script("""
+              pipeline {
+                agent { label 'flutter' }
+
+                options {
+                  ansiColor('xterm')
+                  buildDiscarder(logRotator(numToKeepStr: '10'))
+                  disableConcurrentBuilds()
+                  timeout(time: 20, unit: 'MINUTES')
+                  timestamps()
+                }
+
+                stages {
+                  stage('Tooling') {
+                    steps {
+                      sh 'java -version'
+                      sh 'flutter --version'
+                      sh 'dart --version'
+                      sh 'sqlite3 --version'
+                    }
+                  }
+
+                  stage('SQLite Smoke') {
+                    steps {
+                      sh "sqlite3 flutter-smoke.db 'create table if not exists health(id integer primary key, name text); insert into health(name) values (\\'flutter\\'); select count(*) from health;'"
+                    }
+                  }
+                }
+
+                post {
+                  cleanup {
+                    cleanWs(deleteDirs: true, disableDeferredWipeout: true)
+                  }
+                }
+              }
+            """.stripIndent())
+            sandbox()
+          }
+        }
+      }

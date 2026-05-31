@@ -1,0 +1,10 @@
+ansicolor
+build-timeout
+configuration-as-code
+git
+job-dsl
+pipeline-stage-view
+ssh-slaves
+timestamper
+ws-cleanup
+workflow-aggregator
