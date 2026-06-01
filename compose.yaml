@@ -1,75 +1,19 @@
+name: infrastructure-pipelinse
+
 services:
   jenkins:
-    build:
-      context: .
-      dockerfile: controller/Dockerfile
-    image: local/jenkins-minimal:1.0.0
-    container_name: jenkins-minimal
+    image: ivomika/jenkins:0.1
+    container_name: jenkins
     restart: unless-stopped
-    depends_on:
-      backend-agent:
-        condition: service_healthy
-      flutter-agent:
-        condition: service_healthy
     environment:
       CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
-      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
-      JENKINS_OPTS: --httpPort=8080
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
-      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin123}
-      JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
-      AGENT_SSH_USERNAME: ${AGENT_SSH_USERNAME:-jenkins}
-      AGENT_SSH_PASSWORD: ${AGENT_SSH_PASSWORD:-jenkins123}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin}
     ports:
       - "8080:8080"
-      - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - ./jcasc:/var/jenkins_home/casc:ro
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/8080'"]
-      interval: 20s
-      timeout: 5s
-      retries: 10
-      start_period: 90s
-  backend-agent:
-    build:
-      context: .
-      dockerfile: agents/backend-maven/Dockerfile
-    image: local/jenkins-backend-agent:1.0.0
-    container_name: jenkins-backend-agent
-    restart: unless-stopped
-    environment:
-      AGENT_SSH_USERNAME: ${AGENT_SSH_USERNAME:-jenkins}
-      AGENT_SSH_PASSWORD: ${AGENT_SSH_PASSWORD:-jenkins123}
-    volumes:
-      - backend_maven_cache:/home/jenkins/.m2
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/22'"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-  flutter-agent:
-    build:
-      context: .
-      dockerfile: agents/flutter/Dockerfile
-    image: local/jenkins-flutter-agent:1.0.0
-    container_name: jenkins-flutter-agent
-    restart: unless-stopped
-    environment:
-      AGENT_SSH_USERNAME: ${AGENT_SSH_USERNAME:-jenkins}
-      AGENT_SSH_PASSWORD: ${AGENT_SSH_PASSWORD:-jenkins123}
-    volumes:
-      - flutter_pub_cache:/home/jenkins/.pub-cache
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/22'"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
+      - ./jenkins/jcasc:/var/jenkins_home/casc:ro
 
 volumes:
   jenkins_home:
-  backend_maven_cache:
-  flutter_pub_cache:
