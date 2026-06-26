@@ -3,6 +3,10 @@ name: infrastructure-pipelinse
 services:
   jenkins:
     image: ivomika/jenkins:0.1
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: jenkins/dockerfile
     container_name: jenkins
     restart: unless-stopped
     environment:
