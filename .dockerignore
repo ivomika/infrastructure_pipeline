@@ -1,6 +1,7 @@
 .env
 .example
 .git
+.gitkeep
 README.md
 jenkins_home
 
