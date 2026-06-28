@@ -6,6 +6,7 @@ git
 job-dsl
 pipeline-groovy-lib
 pipeline-stage-view
+ssh-credentials
 ssh-slaves
 timestamper
 ws-cleanup

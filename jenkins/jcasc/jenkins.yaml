@@ -16,12 +16,14 @@ credentials:
   system:
     domainCredentials:
       - credentials:
-          - usernamePassword:
+          - basicSSHUserPrivateKey:
               scope: GLOBAL
               id: "${SHARED_LIBRARY_CREDENTIALS_ID}"
-              username: "${SHARED_LIBRARY_GIT_USERNAME}"
-              password: "${SHARED_LIBRARY_GIT_PASSWORD}"
-              description: "Git credentials for Jenkins shared library"
+              username: "${SHARED_LIBRARY_SSH_USERNAME}"
+              description: "SSH deploy key for Jenkins shared library"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${readFile:${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH}}"
 
 unclassified:
   location:
@@ -39,3 +41,7 @@ unclassified:
               git:
                 remote: "${SHARED_LIBRARY_REPOSITORY_URL}"
                 credentialsId: "${SHARED_LIBRARY_CREDENTIALS_ID}"
+
+security:
+  gitHostKeyVerificationConfiguration:
+    sshHostKeyVerificationStrategy: "knownHostsFileVerificationStrategy"

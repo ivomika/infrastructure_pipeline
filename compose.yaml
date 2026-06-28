@@ -18,13 +18,14 @@ services:
       SHARED_LIBRARY_REPOSITORY_URL: ${SHARED_LIBRARY_REPOSITORY_URL:?SHARED_LIBRARY_REPOSITORY_URL is required}
       SHARED_LIBRARY_DEFAULT_BRANCH: ${SHARED_LIBRARY_DEFAULT_BRANCH:?SHARED_LIBRARY_DEFAULT_BRANCH is required}
       SHARED_LIBRARY_CREDENTIALS_ID: ${SHARED_LIBRARY_CREDENTIALS_ID:?SHARED_LIBRARY_CREDENTIALS_ID is required}
-      SHARED_LIBRARY_GIT_USERNAME: ${SHARED_LIBRARY_GIT_USERNAME:?SHARED_LIBRARY_GIT_USERNAME is required}
-      SHARED_LIBRARY_GIT_PASSWORD: ${SHARED_LIBRARY_GIT_PASSWORD:?SHARED_LIBRARY_GIT_PASSWORD is required}
+      SHARED_LIBRARY_SSH_USERNAME: ${SHARED_LIBRARY_SSH_USERNAME:-git}
+      SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH: ${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH:-/var/jenkins_home/.ssh/shared-library.key}
     ports:
       - "8080:8080"
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./jenkins/jcasc:/var/jenkins_home/casc:ro
+      - ./jenkins/secrets:/var/jenkins_home/.ssh:ro
 
 volumes:
   jenkins_home:

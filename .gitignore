@@ -1,2 +1,4 @@
 .env
-
+jenkins/secrets/*
+!jenkins/secrets/.gitkeep
+!jenkins/secrets/README.md
