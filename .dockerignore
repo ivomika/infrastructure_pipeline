@@ -1,7 +1,5 @@
-.env
-.example
-.git
-.gitkeep
-README.md
-jenkins_home
-
+*
+!jenkins/
+!jenkins/dockerfile
+!jenkins/plugins/
+!jenkins/plugins/plugins.txt

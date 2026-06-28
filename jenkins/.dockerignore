@@ -1,0 +1,4 @@
+*
+!dockerfile
+!plugins/
+!plugins/plugins.txt
