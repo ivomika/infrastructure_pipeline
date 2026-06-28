@@ -38,7 +38,7 @@ unclassified:
         retriever:
           modernSCM:
             scm:
-              git:
+              gitSource:
                 remote: "${SHARED_LIBRARY_REPOSITORY_URL}"
                 credentialsId: "${SHARED_LIBRARY_CREDENTIALS_ID}"
 
