@@ -5,8 +5,8 @@ services:
     image: ivomika/jenkins:0.1
     pull_policy: never
     build:
-      context: .
-      dockerfile: jenkins/dockerfile
+      context: ./jenkins
+      dockerfile: dockerfile
     container_name: jenkins
     restart: unless-stopped
     environment:
