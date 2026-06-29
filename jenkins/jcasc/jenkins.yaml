@@ -2,6 +2,24 @@ jenkins:
   systemMessage: "Minimal Jenkins in Docker managed by JCasC"
   numExecutors: 1
   mode: NORMAL
+  nodes:
+    - permanent:
+        name: "${FLUTTER_AGENT_NAME}"
+        nodeDescription: "Flutter agent running in Docker Compose"
+        remoteFS: "${FLUTTER_AGENT_REMOTE_FS}"
+        numExecutors: 1
+        labelString: "${FLUTTER_AGENT_LABELS}"
+        mode: NORMAL
+        retentionStrategy: "always"
+        launcher:
+          sSHLauncher:
+            host: "${FLUTTER_AGENT_HOST}"
+            port: 22
+            credentialsId: "${FLUTTER_AGENT_CREDENTIALS_ID}"
+            launchTimeoutSeconds: 60
+            maxNumRetries: 10
+            retryWaitTime: 15
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
   securityRealm:
     local:
       allowsSignup: true
@@ -21,6 +39,14 @@ credentials:
               id: "${SHARED_LIBRARY_CREDENTIALS_ID}"
               username: "${SHARED_LIBRARY_SSH_USERNAME}"
               description: "SSH deploy key for Jenkins shared library"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${readFile:${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH}}"
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: "${FLUTTER_AGENT_CREDENTIALS_ID}"
+              username: "${FLUTTER_AGENT_SSH_USERNAME}"
+              description: "SSH key for the Flutter Jenkins agent"
               privateKeySource:
                 directEntry:
                   privateKey: "${readFile:${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH}}"

@@ -20,6 +20,12 @@ services:
       SHARED_LIBRARY_CREDENTIALS_ID: ${SHARED_LIBRARY_CREDENTIALS_ID:?SHARED_LIBRARY_CREDENTIALS_ID is required}
       SHARED_LIBRARY_SSH_USERNAME: ${SHARED_LIBRARY_SSH_USERNAME:-git}
       SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH: ${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH:-/var/jenkins_home/.ssh/shared-library.key}
+      FLUTTER_AGENT_NAME: ${FLUTTER_AGENT_NAME:-flutter-agent}
+      FLUTTER_AGENT_HOST: ${FLUTTER_AGENT_HOST:-flutter-agent}
+      FLUTTER_AGENT_LABELS: ${FLUTTER_AGENT_LABELS:-flutter}
+      FLUTTER_AGENT_REMOTE_FS: ${FLUTTER_AGENT_REMOTE_FS:-/home/jenkins/agent}
+      FLUTTER_AGENT_CREDENTIALS_ID: ${FLUTTER_AGENT_CREDENTIALS_ID:-flutter-agent-ssh}
+      FLUTTER_AGENT_SSH_USERNAME: ${FLUTTER_AGENT_SSH_USERNAME:-jenkins}
     ports:
       - "8080:8080"
     volumes:
@@ -27,5 +33,24 @@ services:
       - ./jenkins/jcasc:/var/jenkins_home/casc:ro
       - ./jenkins/secrets:/var/jenkins_home/.ssh:ro
 
+  flutter-agent:
+    image: ivomika/flutter-agent:${FLUTTER_IMAGE_VERSION:-3.44.0}
+    pull_policy: never
+    build:
+      context: ./jenkins/agents/flutter
+      dockerfile: dockerfile
+      args:
+        FLUTTER_IMAGE: ghcr.io/cirruslabs/flutter:${FLUTTER_IMAGE_VERSION:-3.44.0}
+    container_name: flutter-agent
+    restart: unless-stopped
+    depends_on:
+      - jenkins
+    environment:
+      JENKINS_AGENT_SSH_PUBLIC_KEY_PATH: /run/jenkins-secrets/shared-library.key.pub
+    volumes:
+      - ./jenkins/secrets/shared-library.key.pub:/run/jenkins-secrets/shared-library.key.pub:ro
+      - flutter_agent_home:/home/jenkins/agent
+
 volumes:
   jenkins_home:
+  flutter_agent_home:

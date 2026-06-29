@@ -1,0 +1,27 @@
+ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:3.44.0
+FROM ${FLUTTER_IMAGE}
+
+USER root
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        git \
+        openssh-server \
+        openjdk-21-jre-headless \
+    && rm -rf /var/lib/apt/lists/* \
+    && if ! id -u jenkins >/dev/null 2>&1; then useradd -m -d /home/jenkins -s /bin/bash jenkins; fi \
+    && mkdir -p /var/run/sshd /home/jenkins/.ssh /home/jenkins/agent \
+    && chown -R jenkins:jenkins /home/jenkins \
+    && chown -R jenkins:jenkins /sdks/flutter \
+    && chmod 700 /home/jenkins/.ssh \
+    && git config --system --add safe.directory /sdks/flutter \
+    && ln -sf /sdks/flutter/bin/flutter /usr/local/bin/flutter \
+    && ln -sf /sdks/flutter/bin/dart /usr/local/bin/dart
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 22
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
