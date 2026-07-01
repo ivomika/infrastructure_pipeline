@@ -1,6 +1,6 @@
 jenkins:
   systemMessage: "Minimal Jenkins in Docker managed by JCasC"
-  numExecutors: 1
+  numExecutors: 0
   mode: NORMAL
   nodes:
     - permanent:
