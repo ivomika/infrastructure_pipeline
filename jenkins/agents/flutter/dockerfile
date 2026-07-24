@@ -27,6 +27,7 @@ RUN apt-get update \
         curl \
         git \
         libglu1-mesa \
+        libsqlite3-dev \
         unzip \
         xz-utils \
         zip \
