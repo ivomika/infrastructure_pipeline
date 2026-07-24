@@ -1,4 +1,35 @@
 services:
+  nodejs-agent-image:
+    image: ivomika/nodejs-agent:local
+    pull_policy: never
+    profiles:
+      - agent-image
+    build:
+      context: ./nodejs
+      dockerfile: dockerfile
+      args:
+        JENKINS_INBOUND_AGENT_IMAGE: ${JENKINS_INBOUND_AGENT_IMAGE:?JENKINS_INBOUND_AGENT_IMAGE is required}
+        NODE_VERSION: ${NODE_VERSION:?NODE_VERSION is required}
+        NODE_LINUX_X64_SHA256: ${NODE_LINUX_X64_SHA256:?NODE_LINUX_X64_SHA256 is required}
+        NODE_LINUX_ARM64_SHA256: ${NODE_LINUX_ARM64_SHA256:?NODE_LINUX_ARM64_SHA256 is required}
+    entrypoint:
+      - /bin/true
+
+  java-agent-image:
+    image: ivomika/java-agent:local
+    pull_policy: never
+    profiles:
+      - agent-image
+    build:
+      context: ./java
+      dockerfile: dockerfile
+      args:
+        JENKINS_INBOUND_AGENT_IMAGE: ${JENKINS_INBOUND_AGENT_IMAGE:?JENKINS_INBOUND_AGENT_IMAGE is required}
+        MAVEN_VERSION: ${MAVEN_VERSION:?MAVEN_VERSION is required}
+        MAVEN_ARCHIVE_SHA512: ${MAVEN_ARCHIVE_SHA512:?MAVEN_ARCHIVE_SHA512 is required}
+    entrypoint:
+      - /bin/true
+
   flutter-agent-image:
     image: ivomika/flutter-agent:local
     pull_policy: never

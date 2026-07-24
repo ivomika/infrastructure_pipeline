@@ -60,6 +60,16 @@ services:
       FLUTTER_AGENT_REMOTE_FS: ${FLUTTER_AGENT_REMOTE_FS:-/home/jenkins/agent}
       FLUTTER_AGENT_INSTANCE_CAP: ${FLUTTER_AGENT_INSTANCE_CAP:-2}
       FLUTTER_AGENT_IMAGE: ${FLUTTER_AGENT_IMAGE:-ivomika/flutter-agent:local}
+      NODEJS_AGENT_NAME: ${NODEJS_AGENT_NAME:-nodejs-agent}
+      NODEJS_AGENT_LABELS: ${NODEJS_AGENT_LABELS:-nodejs}
+      NODEJS_AGENT_REMOTE_FS: ${NODEJS_AGENT_REMOTE_FS:-/home/jenkins/agent}
+      NODEJS_AGENT_INSTANCE_CAP: ${NODEJS_AGENT_INSTANCE_CAP:-2}
+      NODEJS_AGENT_IMAGE: ${NODEJS_AGENT_IMAGE:-ivomika/nodejs-agent:local}
+      JAVA_AGENT_NAME: ${JAVA_AGENT_NAME:-java-agent}
+      JAVA_AGENT_LABELS: ${JAVA_AGENT_LABELS:-java maven backend}
+      JAVA_AGENT_REMOTE_FS: ${JAVA_AGENT_REMOTE_FS:-/home/jenkins/agent}
+      JAVA_AGENT_INSTANCE_CAP: ${JAVA_AGENT_INSTANCE_CAP:-2}
+      JAVA_AGENT_IMAGE: ${JAVA_AGENT_IMAGE:-ivomika/java-agent:local}
     ports:
       - "8080:8080"
     expose:

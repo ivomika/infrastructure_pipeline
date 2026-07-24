@@ -1,0 +1,41 @@
+ARG JENKINS_INBOUND_AGENT_IMAGE=jenkins/inbound-agent:3355.v388858a_47b_33-14-jdk21
+FROM ${JENKINS_INBOUND_AGENT_IMAGE}
+
+ARG MAVEN_VERSION
+ARG MAVEN_ARCHIVE_SHA512
+
+ENV MAVEN_HOME=/opt/maven \
+    MAVEN_CONFIG=/home/jenkins/.m2 \
+    PATH=/opt/maven/bin:${PATH}
+
+USER root
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        unzip \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --fail --location --retry 3 \
+        "https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+        --output /tmp/maven.tar.gz \
+    && echo "${MAVEN_ARCHIVE_SHA512}  /tmp/maven.tar.gz" | sha512sum --check - \
+    && mkdir -p "${MAVEN_HOME}" \
+    && tar --extract --gzip --file /tmp/maven.tar.gz \
+        --directory "${MAVEN_HOME}" \
+        --strip-components=1 \
+    && rm /tmp/maven.tar.gz \
+    && mkdir -p /home/jenkins/agent "${MAVEN_CONFIG}" /home/jenkins/.gradle \
+    && chown -R jenkins:jenkins \
+        /home/jenkins \
+        "${MAVEN_HOME}"
+
+USER jenkins
+
+RUN java -version \
+    && javac -version \
+    && mvn --version \
+    && git --version

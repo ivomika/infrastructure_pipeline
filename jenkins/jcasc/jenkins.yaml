@@ -13,6 +13,40 @@ jenkins:
           connectTimeout: 60
           readTimeout: 60
         templates:
+          - name: "${NODEJS_AGENT_NAME}"
+            labelString: "${NODEJS_AGENT_LABELS}"
+            remoteFs: "${NODEJS_AGENT_REMOTE_FS}"
+            mode: EXCLUSIVE
+            instanceCapStr: "${NODEJS_AGENT_INSTANCE_CAP}"
+            pullStrategy: PULL_NEVER
+            pullTimeout: 600
+            removeVolumes: true
+            retentionStrategy:
+              idleMinutes: 0
+            connector:
+              jnlp:
+                jenkinsUrl: "${JENKINS_INTERNAL_URL}"
+                user: "jenkins"
+            dockerTemplateBase:
+              image: "${NODEJS_AGENT_IMAGE}"
+              network: "${JENKINS_DOCKER_NETWORK}"
+          - name: "${JAVA_AGENT_NAME}"
+            labelString: "${JAVA_AGENT_LABELS}"
+            remoteFs: "${JAVA_AGENT_REMOTE_FS}"
+            mode: EXCLUSIVE
+            instanceCapStr: "${JAVA_AGENT_INSTANCE_CAP}"
+            pullStrategy: PULL_NEVER
+            pullTimeout: 600
+            removeVolumes: true
+            retentionStrategy:
+              idleMinutes: 0
+            connector:
+              jnlp:
+                jenkinsUrl: "${JENKINS_INTERNAL_URL}"
+                user: "jenkins"
+            dockerTemplateBase:
+              image: "${JAVA_AGENT_IMAGE}"
+              network: "${JENKINS_DOCKER_NETWORK}"
           - name: "${FLUTTER_AGENT_NAME}"
             labelString: "${FLUTTER_AGENT_LABELS}"
             remoteFs: "${FLUTTER_AGENT_REMOTE_FS}"

@@ -1,0 +1,44 @@
+ARG JENKINS_INBOUND_AGENT_IMAGE=jenkins/inbound-agent:3355.v388858a_47b_33-14-jdk21
+FROM ${JENKINS_INBOUND_AGENT_IMAGE}
+
+ARG TARGETARCH
+ARG NODE_VERSION
+ARG NODE_LINUX_X64_SHA256
+ARG NODE_LINUX_ARM64_SHA256
+
+ENV NODE_HOME=/opt/node \
+    NPM_CONFIG_CACHE=/home/jenkins/.npm \
+    PATH=/opt/node/bin:${PATH}
+
+USER root
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        xz-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN case "${TARGETARCH}" in \
+        amd64) node_arch="x64"; node_sha256="${NODE_LINUX_X64_SHA256}" ;; \
+        arm64) node_arch="arm64"; node_sha256="${NODE_LINUX_ARM64_SHA256}" ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl --fail --location --retry 3 \
+        "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" \
+        --output /tmp/node.tar.xz \
+    && echo "${node_sha256}  /tmp/node.tar.xz" | sha256sum --check - \
+    && mkdir -p "${NODE_HOME}" \
+    && tar --extract --xz --file /tmp/node.tar.xz \
+        --directory "${NODE_HOME}" \
+        --strip-components=1 \
+    && rm /tmp/node.tar.xz \
+    && mkdir -p /home/jenkins/agent "${NPM_CONFIG_CACHE}" \
+    && chown -R jenkins:jenkins /home/jenkins "${NODE_HOME}"
+
+USER jenkins
+
+RUN node --version \
+    && npm --version \
+    && git --version
