@@ -5,6 +5,29 @@ include:
     env_file: ./jenkins/agents/agents.env
 
 services:
+  docker-socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.4.2@sha256:1f3a6f303320723d199d2316a3e82b2e2685d86c275d5e3deeaf182573b47476
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      NETWORKS: 1
+      INFO: 1
+      POST: 1
+      ALLOW_START: 1
+      ALLOW_STOP: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./jenkins/docker-socket-proxy/haproxy.cfg.template:/usr/local/etc/haproxy/haproxy.cfg.template:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - docker-api
+
   jenkins:
     image: ivomika/jenkins:0.1
     pull_policy: never
@@ -12,18 +35,19 @@ services:
       context: ./jenkins
       dockerfile: dockerfile
     container_name: jenkins
-    user: root
     restart: unless-stopped
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
     environment:
       CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
-      HOME: /var/jenkins_home
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin}
       JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
       JENKINS_INTERNAL_URL: ${JENKINS_INTERNAL_URL:-http://jenkins:8080/}
       JENKINS_DOCKER_CLOUD_NAME: ${JENKINS_DOCKER_CLOUD_NAME:-local-docker}
       JENKINS_DOCKER_CONTAINER_CAP: ${JENKINS_DOCKER_CONTAINER_CAP:-4}
-      JENKINS_DOCKER_HOST: ${JENKINS_DOCKER_HOST:-unix:///var/run/docker.sock}
+      JENKINS_DOCKER_HOST: ${JENKINS_DOCKER_HOST:-tcp://docker-socket-proxy:2375}
       JENKINS_DOCKER_NETWORK: ${JENKINS_DOCKER_NETWORK:-jenkins}
       SHARED_LIBRARY_NAME: ${SHARED_LIBRARY_NAME:?SHARED_LIBRARY_NAME is required}
       SHARED_LIBRARY_REPOSITORY_URL: ${SHARED_LIBRARY_REPOSITORY_URL:?SHARED_LIBRARY_REPOSITORY_URL is required}
@@ -44,9 +68,9 @@ services:
       - jenkins_home:/var/jenkins_home
       - ./jenkins/jcasc:/var/jenkins_home/casc:ro
       - ./jenkins/secrets:/var/jenkins_home/.ssh:ro
-      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - jenkins
+      - docker-api
 
 volumes:
   jenkins_home:
@@ -54,3 +78,5 @@ volumes:
 networks:
   jenkins:
     name: ${JENKINS_DOCKER_NETWORK:-jenkins}
+  docker-api:
+    internal: true

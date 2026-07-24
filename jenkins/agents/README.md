@@ -25,5 +25,13 @@ agent { label 'flutter' }
 ```
 
 The inbound agent port `50000` is available only inside the `jenkins` Docker
-network. It does not need to be published on the host. The controller mounts
-`/var/run/docker.sock` so Docker Plugin can provision and remove agents.
+network. It does not need to be published on the host.
+
+The controller connects to Docker through `docker-socket-proxy` on the isolated
+`docker-api` network. Only the proxy mounts `/var/run/docker.sock`; the Jenkins
+controller runs as the image's unprivileged `jenkins` user.
+
+The proxy uses the pinned HAProxy template in `jenkins/docker-socket-proxy`.
+Client connections are explicitly closed after each Docker API response so the
+Jenkins Docker client cannot reuse an expired idle connection during agent
+cleanup.
