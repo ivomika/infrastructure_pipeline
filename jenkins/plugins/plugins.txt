@@ -2,6 +2,7 @@ ansicolor
 build-timeout
 configuration-as-code
 credentials
+docker-plugin
 git
 job-dsl
 pipeline-groovy-lib

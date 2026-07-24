@@ -1,0 +1,19 @@
+services:
+  flutter-agent-image:
+    image: ivomika/flutter-agent:local
+    pull_policy: never
+    profiles:
+      - agent-image
+    build:
+      context: ./flutter
+      dockerfile: dockerfile
+      args:
+        JENKINS_INBOUND_AGENT_IMAGE: ${JENKINS_INBOUND_AGENT_IMAGE:?JENKINS_INBOUND_AGENT_IMAGE is required}
+        FLUTTER_VERSION: ${FLUTTER_VERSION:?FLUTTER_VERSION is required}
+        FLUTTER_ARCHIVE_SHA256: ${FLUTTER_ARCHIVE_SHA256:?FLUTTER_ARCHIVE_SHA256 is required}
+        ANDROID_COMMAND_LINE_TOOLS_VERSION: ${ANDROID_COMMAND_LINE_TOOLS_VERSION:?ANDROID_COMMAND_LINE_TOOLS_VERSION is required}
+        ANDROID_COMMAND_LINE_TOOLS_SHA256: ${ANDROID_COMMAND_LINE_TOOLS_SHA256:?ANDROID_COMMAND_LINE_TOOLS_SHA256 is required}
+        ANDROID_PLATFORM_VERSION: ${ANDROID_PLATFORM_VERSION:?ANDROID_PLATFORM_VERSION is required}
+        ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION:?ANDROID_BUILD_TOOLS_VERSION is required}
+    entrypoint:
+      - /bin/true
