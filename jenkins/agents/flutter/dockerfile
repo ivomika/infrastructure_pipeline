@@ -19,6 +19,7 @@ ARG ANDROID_COMMAND_LINE_TOOLS_SHA256
 ARG ANDROID_COMMAND_LINE_TOOLS_SHA1
 ARG ANDROID_PLATFORM_VERSION
 ARG ANDROID_BUILD_TOOLS_VERSION
+ARG SOURCE_DATE_EPOCH
 
 ENV FLUTTER_HOME=/sdks/flutter \
     FLUTTER_ROOT=/sdks/flutter \
@@ -29,11 +30,13 @@ ENV FLUTTER_HOME=/sdks/flutter \
     FLUTTER_VERSION=${FLUTTER_VERSION} \
     ANDROID_PLATFORM_VERSION=${ANDROID_PLATFORM_VERSION} \
     ANDROID_BUILD_TOOLS_VERSION=${ANDROID_BUILD_TOOLS_VERSION} \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH} \
     LANG=C.UTF-8
 
 USER root
 
-RUN sed -i \
+RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
+    && sed -i \
         -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
         -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
         -e "/^Signed-By:/a Check-Valid-Until: no" \
@@ -48,7 +51,11 @@ RUN sed -i \
         "unzip=${UNZIP_VERSION}" \
         "xz-utils=${XZ_UTILS_VERSION}" \
         "zip=${ZIP_VERSION}" \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf \
+        /var/cache/apt/archives/* \
+        /var/lib/apt/lists/* \
+        /var/log/apt/* \
+    && rm -f /var/log/dpkg.log
 
 RUN mkdir -p /sdks /opt/android-sdk-linux/cmdline-tools \
     && curl --fail --location --retry 3 \

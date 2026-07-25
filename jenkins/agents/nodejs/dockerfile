@@ -12,14 +12,17 @@ ARG NODE_LINUX_X64_URL
 ARG NODE_LINUX_X64_SHA256
 ARG NODE_LINUX_ARM64_URL
 ARG NODE_LINUX_ARM64_SHA256
+ARG SOURCE_DATE_EPOCH
 
 ENV NODE_HOME=/opt/node \
     NPM_CONFIG_CACHE=/home/jenkins/.npm \
-    PATH=/opt/node/bin:${PATH}
+    PATH=/opt/node/bin:${PATH} \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 
 USER root
 
-RUN sed -i \
+RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
+    && sed -i \
         -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
         -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
         -e "/^Signed-By:/a Check-Valid-Until: no" \
@@ -30,7 +33,11 @@ RUN sed -i \
         "curl=${CURL_VERSION}" \
         "git=${GIT_VERSION}" \
         "xz-utils=${XZ_UTILS_VERSION}" \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf \
+        /var/cache/apt/archives/* \
+        /var/lib/apt/lists/* \
+        /var/log/apt/* \
+    && rm -f /var/log/dpkg.log
 
 RUN case "${TARGETARCH}" in \
         amd64) node_url="${NODE_LINUX_X64_URL}"; node_sha256="${NODE_LINUX_X64_SHA256}" ;; \

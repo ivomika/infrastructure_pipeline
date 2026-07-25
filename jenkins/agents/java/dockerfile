@@ -10,14 +10,17 @@ ARG ZIP_VERSION
 ARG MAVEN_VERSION
 ARG MAVEN_URL
 ARG MAVEN_ARCHIVE_SHA512
+ARG SOURCE_DATE_EPOCH
 
 ENV MAVEN_HOME=/opt/maven \
     MAVEN_CONFIG=/home/jenkins/.m2 \
-    PATH=/opt/maven/bin:${PATH}
+    PATH=/opt/maven/bin:${PATH} \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 
 USER root
 
-RUN sed -i \
+RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
+    && sed -i \
         -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
         -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
         -e "/^Signed-By:/a Check-Valid-Until: no" \
@@ -29,7 +32,11 @@ RUN sed -i \
         "git=${GIT_VERSION}" \
         "unzip=${UNZIP_VERSION}" \
         "zip=${ZIP_VERSION}" \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf \
+        /var/cache/apt/archives/* \
+        /var/lib/apt/lists/* \
+        /var/log/apt/* \
+    && rm -f /var/log/dpkg.log
 
 RUN curl --fail --location --retry 3 \
         "${MAVEN_URL}" \

@@ -18,7 +18,7 @@ Maven, and utilities required by Maven Wrapper and Gradle Wrapper.
 Build the agent and controller images:
 
 ```powershell
-docker compose --profile agent-image build
+scripts/build-images.sh
 ```
 
 Start Jenkins:

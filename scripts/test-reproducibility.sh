@@ -15,7 +15,7 @@ fi
   exit 2
 }
 
-for command in docker jq tar diff; do
+for command in docker git jq tar diff; do
   command -v "$command" >/dev/null || {
     echo "test-reproducibility: required command is unavailable: $command" >&2
     exit 1
@@ -41,6 +41,12 @@ cleanup() {
 trap cleanup EXIT
 
 cd "$project_dir"
+source_date_epoch="$(git log -1 --format=%ct)"
+[[ "$source_date_epoch" =~ ^[0-9]+$ && "$source_date_epoch" -gt 0 ]] || {
+  echo "test-reproducibility: cannot determine commit timestamp" >&2
+  exit 1
+}
+export SOURCE_DATE_EPOCH="$source_date_epoch"
 docker compose --profile agent-image config --format json >"$compose_json"
 
 services=()
@@ -85,7 +91,7 @@ build_image() {
     --no-cache \
     --pull \
     --provenance=false \
-    --output "type=oci,dest=${archive}" \
+    --output "type=oci,dest=${archive},rewrite-timestamp=true" \
     "${build_args[@]}" \
     "$context"
 }
