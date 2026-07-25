@@ -76,6 +76,16 @@ services:
       - "${JENKINS_HOST_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8080}:8080"
     expose:
       - "50000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl --fail --silent --show-error --output /dev/null
+          http://127.0.0.1:8080/login
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./jcasc:/var/jenkins_home/casc:ro

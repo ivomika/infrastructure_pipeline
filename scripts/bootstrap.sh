@@ -177,4 +177,6 @@ until curl --fail --silent --show-error --output /dev/null "$readiness_url"; do
   sleep 5
 done
 
+"${project_dir}/scripts/smoke-test.sh"
+
 echo "bootstrap: Jenkins is ready at http://${readiness_host}:${host_port}/"
