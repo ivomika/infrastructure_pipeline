@@ -56,7 +56,7 @@ services:
       SHARED_LIBRARY_DEFAULT_BRANCH: ${SHARED_LIBRARY_DEFAULT_BRANCH:?SHARED_LIBRARY_DEFAULT_BRANCH is required}
       SHARED_LIBRARY_CREDENTIALS_ID: ${SHARED_LIBRARY_CREDENTIALS_ID:?SHARED_LIBRARY_CREDENTIALS_ID is required}
       SHARED_LIBRARY_SSH_USERNAME: ${SHARED_LIBRARY_SSH_USERNAME:-git}
-      SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH: ${SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH:-/var/jenkins_home/.ssh/shared-library.key}
+      SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH: /run/secrets/shared-library-key
       FLUTTER_AGENT_NAME: ${FLUTTER_AGENT_NAME:-flutter-agent}
       FLUTTER_AGENT_LABELS: ${FLUTTER_AGENT_LABELS:-flutter}
       FLUTTER_AGENT_REMOTE_FS: ${FLUTTER_AGENT_REMOTE_FS:-/home/jenkins/agent}
@@ -79,13 +79,25 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./jcasc:/var/jenkins_home/casc:ro
-      - ./secrets:/var/jenkins_home/.ssh:ro
+    secrets:
+      - source: shared-library-key
+        target: /run/secrets/shared-library-key
+        mode: 0400
+      - source: shared-library-known-hosts
+        target: /var/jenkins_home/.ssh/known_hosts
+        mode: 0444
     networks:
       - jenkins
       - docker-api
 
 volumes:
   jenkins_home:
+
+secrets:
+  shared-library-key:
+    file: ./secrets/shared-library.key
+  shared-library-known-hosts:
+    file: ./secrets/known_hosts
 
 networks:
   jenkins:

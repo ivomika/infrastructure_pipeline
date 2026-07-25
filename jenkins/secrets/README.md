@@ -44,5 +44,9 @@ SHARED_LIBRARY_REPOSITORY_URL=git@github.com:your-org/jenkins_libs.git
 SHARED_LIBRARY_DEFAULT_BRANCH=main
 SHARED_LIBRARY_CREDENTIALS_ID=jenkins-libs-git
 SHARED_LIBRARY_SSH_USERNAME=git
-SHARED_LIBRARY_SSH_PRIVATE_KEY_PATH=/var/jenkins_home/.ssh/shared-library.key
 ```
+
+The key and `known_hosts` are mounted as separate read-only Compose secrets.
+Do not add their contents to `.env` or pass them as Docker build arguments.
+Before starting Jenkins, use `scripts/start.sh`; it validates both secret files
+before invoking Docker Compose.
