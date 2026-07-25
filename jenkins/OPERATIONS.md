@@ -7,10 +7,9 @@ defaults to 256 MiB RAM, 0.5 CPU, and 128 PIDs. Both use a capped
 `on-failure:5` restart policy and rotate `json-file` logs at five 10 MiB files.
 All values can be adjusted in `.env`.
 
-Ephemeral Java and Node.js agents default to 4 GiB and 2 CPUs. Flutter agents
-default to 6 GiB and 2 CPUs. Docker Plugin 1324 exposes memory and CPU limits
-for templates but does not expose a PID-limit field; PID limits remain enforced
-for the long-running controller and socket proxy.
+Ephemeral agents default to 6 GiB and 2 CPUs. Docker Plugin 1324 exposes memory
+and CPU limits for templates but does not expose a PID-limit field; PID limits
+remain enforced for the long-running controller and socket proxy.
 
 Run the Docker-storage threshold check manually or from cron:
 

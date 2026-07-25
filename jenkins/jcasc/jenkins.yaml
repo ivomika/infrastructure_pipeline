@@ -13,9 +13,10 @@ jenkins:
           connectTimeout: 60
           readTimeout: 60
         templates:
-          - name: "${NODEJS_AGENT_NAME}"
+          - &docker-agent-template
+            name: "${NODEJS_AGENT_NAME}"
             labelString: "${NODEJS_AGENT_LABELS}"
-            remoteFs: "${NODEJS_AGENT_REMOTE_FS}"
+            remoteFs: "${JENKINS_AGENT_REMOTE_FS}"
             mode: EXCLUSIVE
             instanceCapStr: "${NODEJS_AGENT_INSTANCE_CAP}"
             pullStrategy: PULL_NEVER
@@ -28,48 +29,25 @@ jenkins:
                 jenkinsUrl: "${JENKINS_INTERNAL_URL}"
                 user: "jenkins"
             dockerTemplateBase:
+              <<: &docker-agent-container
+                network: "${JENKINS_DOCKER_NETWORK}"
+                memoryLimit: ${JENKINS_AGENT_MEMORY_MB}
+                cpus: "${JENKINS_AGENT_CPUS}"
               image: "${NODEJS_AGENT_IMAGE}"
-              network: "${JENKINS_DOCKER_NETWORK}"
-              memoryLimit: ${NODEJS_AGENT_MEMORY_MB}
-              cpus: "${NODEJS_AGENT_CPUS}"
-          - name: "${JAVA_AGENT_NAME}"
+          - <<: *docker-agent-template
+            name: "${JAVA_AGENT_NAME}"
             labelString: "${JAVA_AGENT_LABELS}"
-            remoteFs: "${JAVA_AGENT_REMOTE_FS}"
-            mode: EXCLUSIVE
             instanceCapStr: "${JAVA_AGENT_INSTANCE_CAP}"
-            pullStrategy: PULL_NEVER
-            pullTimeout: 600
-            removeVolumes: true
-            retentionStrategy:
-              idleMinutes: 0
-            connector:
-              jnlp:
-                jenkinsUrl: "${JENKINS_INTERNAL_URL}"
-                user: "jenkins"
             dockerTemplateBase:
+              <<: *docker-agent-container
               image: "${JAVA_AGENT_IMAGE}"
-              network: "${JENKINS_DOCKER_NETWORK}"
-              memoryLimit: ${JAVA_AGENT_MEMORY_MB}
-              cpus: "${JAVA_AGENT_CPUS}"
-          - name: "${FLUTTER_AGENT_NAME}"
+          - <<: *docker-agent-template
+            name: "${FLUTTER_AGENT_NAME}"
             labelString: "${FLUTTER_AGENT_LABELS}"
-            remoteFs: "${FLUTTER_AGENT_REMOTE_FS}"
-            mode: EXCLUSIVE
             instanceCapStr: "${FLUTTER_AGENT_INSTANCE_CAP}"
-            pullStrategy: PULL_NEVER
-            pullTimeout: 600
-            removeVolumes: true
-            retentionStrategy:
-              idleMinutes: 0
-            connector:
-              jnlp:
-                jenkinsUrl: "${JENKINS_INTERNAL_URL}"
-                user: "jenkins"
             dockerTemplateBase:
+              <<: *docker-agent-container
               image: "${FLUTTER_AGENT_IMAGE}"
-              network: "${JENKINS_DOCKER_NETWORK}"
-              memoryLimit: ${FLUTTER_AGENT_MEMORY_MB}
-              cpus: "${FLUTTER_AGENT_CPUS}"
   securityRealm:
     local:
       allowsSignup: false
