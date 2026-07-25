@@ -1,6 +1,7 @@
 ARG JENKINS_INBOUND_AGENT_IMAGE=jenkins/inbound-agent:3355.v388858a_47b_33-14-jdk21@sha256:0d19619d2993f0809cb080a49136832305d2d568c2dcf84705039aac5258c7fc
 FROM ${JENKINS_INBOUND_AGENT_IMAGE}
 
+ARG DEBIAN_SNAPSHOT=20260202T000000Z
 ARG FLUTTER_VERSION
 ARG FLUTTER_ARCHIVE_SHA256
 ARG ANDROID_COMMAND_LINE_TOOLS_VERSION
@@ -21,16 +22,21 @@ ENV FLUTTER_HOME=/sdks/flutter \
 
 USER root
 
-RUN apt-get update \
+RUN sed -i \
+        -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
+        -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
+        -e "/^Signed-By:/a Check-Valid-Until: no" \
+        /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        git \
-        libglu1-mesa \
-        libsqlite3-dev \
-        unzip \
-        xz-utils \
-        zip \
+        ca-certificates=20250419 \
+        curl=8.14.1-2+deb13u2 \
+        git=1:2.47.3-0+deb13u1 \
+        libglu1-mesa=9.0.2-1.1+b3 \
+        libsqlite3-dev=3.46.1-7 \
+        unzip=6.0-29 \
+        xz-utils=5.8.1-1 \
+        zip=3.0-15 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /sdks /opt/android-sdk-linux/cmdline-tools \

@@ -1,9 +1,18 @@
 FROM jenkins/jenkins:lts-jdk25@sha256:7644ea9234727bec75eaf24864a5c42c16052a85c81fddbebd5932b491e33118
 
+ARG DEBIAN_SNAPSHOT=20260623T000000Z
+
 USER root
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git openssh-client \
+RUN sed -i \
+        -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
+        -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
+        -e "/^Signed-By:/a Check-Valid-Until: no" \
+        /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
+    && apt-get install -y --no-install-recommends \
+        git=1:2.47.3-0+deb13u1 \
+        openssh-client=1:10.0p1-7+deb13u4 \
     && rm -rf /var/lib/apt/lists/*
 
 USER jenkins
