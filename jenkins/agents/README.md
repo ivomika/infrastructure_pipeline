@@ -3,9 +3,9 @@
 `compose.agents.yaml` is included by the root `compose.yaml`. It declares
 build-only services for three local agent images:
 
-- `ivomika/flutter-agent:local` with label `flutter`;
-- `ivomika/nodejs-agent:local` with label `nodejs`;
-- `ivomika/java-agent:local` with labels `java`, `maven`, and `backend`.
+- [`ivomika/flutter-agent:local`](flutter/README.md) with label `flutter`;
+- [`ivomika/nodejs-agent:local`](nodejs/README.md) with label `nodejs`;
+- [`ivomika/java-agent:local`](java/README.md) with labels `java`, `maven`, and `backend`.
 
 Jenkins Docker Plugin creates and removes the actual agent containers on
 demand.
@@ -45,15 +45,17 @@ The Java agent also accepts the `maven` and `backend` labels.
 Minimal Node.js backend pipeline:
 
 ```groovy
+@Library('jenkins_libs') _
+
 pipeline {
   agent { label 'nodejs' }
 
   stages {
     stage('Build and test') {
       steps {
-        sh 'npm ci'
-        sh 'npm test'
-        sh 'npm run build'
+        npmInstall()
+        npmTest()
+        npmBuild()
       }
     }
   }
@@ -63,21 +65,23 @@ pipeline {
 Minimal Maven backend pipeline:
 
 ```groovy
+@Library('jenkins_libs') _
+
 pipeline {
   agent { label 'java' }
 
   stages {
     stage('Build and test') {
       steps {
-        sh 'mvn --batch-mode verify'
+        mavenBuild()
       }
     }
   }
 }
 ```
 
-For a repository with Maven Wrapper or Gradle Wrapper, use
-`./mvnw --batch-mode verify` or `./gradlew build` respectively.
+`mavenBuild()` automatically uses Maven Wrapper when present. For a repository
+with Gradle Wrapper, use `gradleBuild()`.
 
 The inbound agent port `50000` is available only inside the `jenkins` Docker
 network. It does not need to be published on the host.
