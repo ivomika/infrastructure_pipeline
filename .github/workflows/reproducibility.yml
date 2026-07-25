@@ -1,0 +1,44 @@
+name: Reproducible images
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/reproducibility.yml"
+      - "compose.yaml"
+      - "jenkins/**"
+      - "scripts/**"
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/reproducibility.yml"
+      - "compose.yaml"
+      - "jenkins/**"
+      - "scripts/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproducibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare-clean-builds:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Check out the exact commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          install: true
+
+      - name: Compare independent OCI builds
+        env:
+          CI_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          REPRO_PLATFORM: linux/amd64
+        run: scripts/test-reproducibility.sh
