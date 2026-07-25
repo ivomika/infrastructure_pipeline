@@ -4,6 +4,7 @@ FROM ${JENKINS_CONTROLLER_BASE_IMAGE}
 ARG DEBIAN_SNAPSHOT
 ARG GIT_VERSION
 ARG OPENSSH_CLIENT_VERSION
+ARG JENKINS_PLUGIN_DOWNLOAD_URL
 
 USER root
 
@@ -25,6 +26,7 @@ COPY plugins/plugins.sha256 /usr/share/jenkins/ref/plugins.sha256
 
 RUN jenkins-plugin-cli \
         --plugin-file /usr/share/jenkins/ref/plugins.lock.txt \
+        --jenkins-update-center-download-url "${JENKINS_PLUGIN_DOWNLOAD_URL}" \
         --latest false \
     && cd /usr/share/jenkins/ref/plugins \
     && sha256sum --check ../plugins.sha256
