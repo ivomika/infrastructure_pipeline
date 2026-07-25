@@ -30,6 +30,8 @@ jenkins:
             dockerTemplateBase:
               image: "${NODEJS_AGENT_IMAGE}"
               network: "${JENKINS_DOCKER_NETWORK}"
+              memoryLimit: ${NODEJS_AGENT_MEMORY_MB}
+              cpus: "${NODEJS_AGENT_CPUS}"
           - name: "${JAVA_AGENT_NAME}"
             labelString: "${JAVA_AGENT_LABELS}"
             remoteFs: "${JAVA_AGENT_REMOTE_FS}"
@@ -47,6 +49,8 @@ jenkins:
             dockerTemplateBase:
               image: "${JAVA_AGENT_IMAGE}"
               network: "${JENKINS_DOCKER_NETWORK}"
+              memoryLimit: ${JAVA_AGENT_MEMORY_MB}
+              cpus: "${JAVA_AGENT_CPUS}"
           - name: "${FLUTTER_AGENT_NAME}"
             labelString: "${FLUTTER_AGENT_LABELS}"
             remoteFs: "${FLUTTER_AGENT_REMOTE_FS}"
@@ -64,6 +68,8 @@ jenkins:
             dockerTemplateBase:
               image: "${FLUTTER_AGENT_IMAGE}"
               network: "${JENKINS_DOCKER_NETWORK}"
+              memoryLimit: ${FLUTTER_AGENT_MEMORY_MB}
+              cpus: "${FLUTTER_AGENT_CPUS}"
   securityRealm:
     local:
       allowsSignup: false

@@ -1,7 +1,15 @@
 services:
   docker-socket-proxy:
     image: ${DOCKER_SOCKET_PROXY_TAG:?DOCKER_SOCKET_PROXY_TAG is required}@${DOCKER_SOCKET_PROXY_DIGEST:?DOCKER_SOCKET_PROXY_DIGEST is required}
-    restart: unless-stopped
+    restart: "on-failure:5"
+    mem_limit: ${DOCKER_PROXY_MEMORY_LIMIT:-256m}
+    cpus: ${DOCKER_PROXY_CPU_LIMIT:-0.50}
+    pids_limit: ${DOCKER_PROXY_PIDS_LIMIT:-128}
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-5}
     environment:
       CONTAINERS: 1
       IMAGES: 1
@@ -36,7 +44,15 @@ services:
         OPENSSH_CLIENT_VERSION: ${DEBIAN_OPENSSH_CLIENT_VERSION:?DEBIAN_OPENSSH_CLIENT_VERSION is required}
         JENKINS_PLUGIN_DOWNLOAD_URL: ${JENKINS_PLUGIN_DOWNLOAD_URL:?JENKINS_PLUGIN_DOWNLOAD_URL is required}
         JENKINS_PLUGIN_INFO_URL: ${JENKINS_PLUGIN_INFO_URL:?JENKINS_PLUGIN_INFO_URL is required}
-    restart: unless-stopped
+    restart: "on-failure:5"
+    mem_limit: ${JENKINS_MEMORY_LIMIT:-4g}
+    cpus: ${JENKINS_CPU_LIMIT:-2.0}
+    pids_limit: ${JENKINS_PIDS_LIMIT:-512}
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-5}
     depends_on:
       docker-socket-proxy:
         condition: service_healthy
@@ -61,16 +77,22 @@ services:
       FLUTTER_AGENT_REMOTE_FS: ${FLUTTER_AGENT_REMOTE_FS:-/home/jenkins/agent}
       FLUTTER_AGENT_INSTANCE_CAP: ${FLUTTER_AGENT_INSTANCE_CAP:-2}
       FLUTTER_AGENT_IMAGE: ${FLUTTER_AGENT_IMAGE:?FLUTTER_AGENT_IMAGE is required}
+      FLUTTER_AGENT_MEMORY_MB: ${FLUTTER_AGENT_MEMORY_MB:-6144}
+      FLUTTER_AGENT_CPUS: ${FLUTTER_AGENT_CPUS:-2.0}
       NODEJS_AGENT_NAME: ${NODEJS_AGENT_NAME:-nodejs-agent}
       NODEJS_AGENT_LABELS: ${NODEJS_AGENT_LABELS:-nodejs}
       NODEJS_AGENT_REMOTE_FS: ${NODEJS_AGENT_REMOTE_FS:-/home/jenkins/agent}
       NODEJS_AGENT_INSTANCE_CAP: ${NODEJS_AGENT_INSTANCE_CAP:-2}
       NODEJS_AGENT_IMAGE: ${NODEJS_AGENT_IMAGE:?NODEJS_AGENT_IMAGE is required}
+      NODEJS_AGENT_MEMORY_MB: ${NODEJS_AGENT_MEMORY_MB:-4096}
+      NODEJS_AGENT_CPUS: ${NODEJS_AGENT_CPUS:-2.0}
       JAVA_AGENT_NAME: ${JAVA_AGENT_NAME:-java-agent}
       JAVA_AGENT_LABELS: ${JAVA_AGENT_LABELS:-java maven backend}
       JAVA_AGENT_REMOTE_FS: ${JAVA_AGENT_REMOTE_FS:-/home/jenkins/agent}
       JAVA_AGENT_INSTANCE_CAP: ${JAVA_AGENT_INSTANCE_CAP:-2}
       JAVA_AGENT_IMAGE: ${JAVA_AGENT_IMAGE:?JAVA_AGENT_IMAGE is required}
+      JAVA_AGENT_MEMORY_MB: ${JAVA_AGENT_MEMORY_MB:-4096}
+      JAVA_AGENT_CPUS: ${JAVA_AGENT_CPUS:-2.0}
     ports:
       - "${JENKINS_HOST_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8080}:8080"
     expose:
@@ -104,6 +126,7 @@ services:
 
 volumes:
   jenkins_home:
+    name: ${JENKINS_HOME_VOLUME:-infrastructure-pipeline_jenkins_home}
 
 secrets:
   jenkins-admin-password:

@@ -112,6 +112,7 @@ unset admin_password
 
 "${project_dir}/scripts/preflight-secrets.sh"
 "${project_dir}/scripts/verify-locks.sh" --offline
+"${project_dir}/scripts/check-disk-space.sh"
 
 source_date_epoch="$(git -C "$project_dir" log -1 --format=%ct)"
 [[ "$source_date_epoch" =~ ^[0-9]+$ && "$source_date_epoch" -gt 0 ]] ||
