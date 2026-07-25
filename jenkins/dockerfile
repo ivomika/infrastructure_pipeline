@@ -8,6 +8,11 @@ RUN apt-get update \
 
 USER jenkins
 
-COPY plugins/plugins.txt /usr/share/jenkins/ref/plugins.txt
+COPY plugins/plugins.lock.txt /usr/share/jenkins/ref/plugins.lock.txt
+COPY plugins/plugins.sha256 /usr/share/jenkins/ref/plugins.sha256
 
-RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli \
+        --plugin-file /usr/share/jenkins/ref/plugins.lock.txt \
+        --latest false \
+    && cd /usr/share/jenkins/ref/plugins \
+    && sha256sum --check ../plugins.sha256

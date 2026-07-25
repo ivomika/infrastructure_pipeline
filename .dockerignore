@@ -3,3 +3,5 @@
 !jenkins/dockerfile
 !jenkins/plugins/
 !jenkins/plugins/plugins.txt
+!jenkins/plugins/plugins.lock.txt
+!jenkins/plugins/plugins.sha256
