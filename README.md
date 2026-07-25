@@ -11,9 +11,10 @@ engine.
 
 A build is defined entirely by the committed contents of:
 
-- `compose.yaml` and `jenkins/agents/compose.agents.yaml`;
+- `compose.yaml`, `jenkins/compose.yaml`, and
+  `jenkins/agents/compose.agents.yaml`;
 - every Dockerfile and `.dockerignore` in `jenkins/`;
-- `jenkins/agents/agents.env`;
+- `jenkins/toolchain.lock`;
 - `jenkins/plugins/plugins.txt`;
 - `jenkins/jcasc/jenkins.yaml`;
 - `jenkins/docker-socket-proxy/haproxy.cfg.template`;

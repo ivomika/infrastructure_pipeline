@@ -1,10 +1,20 @@
-ARG JENKINS_INBOUND_AGENT_IMAGE=jenkins/inbound-agent:3355.v388858a_47b_33-14-jdk21@sha256:0d19619d2993f0809cb080a49136832305d2d568c2dcf84705039aac5258c7fc
+ARG JENKINS_INBOUND_AGENT_IMAGE
 FROM ${JENKINS_INBOUND_AGENT_IMAGE}
 
-ARG DEBIAN_SNAPSHOT=20260202T000000Z
+ARG DEBIAN_SNAPSHOT
+ARG CA_CERTIFICATES_VERSION
+ARG CURL_VERSION
+ARG GIT_VERSION
+ARG LIBGLU1_MESA_VERSION
+ARG LIBSQLITE3_DEV_VERSION
+ARG UNZIP_VERSION
+ARG XZ_UTILS_VERSION
+ARG ZIP_VERSION
 ARG FLUTTER_VERSION
+ARG FLUTTER_URL
 ARG FLUTTER_ARCHIVE_SHA256
 ARG ANDROID_COMMAND_LINE_TOOLS_VERSION
+ARG ANDROID_COMMAND_LINE_TOOLS_URL
 ARG ANDROID_COMMAND_LINE_TOOLS_SHA256
 ARG ANDROID_PLATFORM_VERSION
 ARG ANDROID_BUILD_TOOLS_VERSION
@@ -29,19 +39,19 @@ RUN sed -i \
         /etc/apt/sources.list.d/debian.sources \
     && apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates=20250419 \
-        curl=8.14.1-2+deb13u2 \
-        git=1:2.47.3-0+deb13u1 \
-        libglu1-mesa=9.0.2-1.1+b3 \
-        libsqlite3-dev=3.46.1-7 \
-        unzip=6.0-29 \
-        xz-utils=5.8.1-1 \
-        zip=3.0-15 \
+        "ca-certificates=${CA_CERTIFICATES_VERSION}" \
+        "curl=${CURL_VERSION}" \
+        "git=${GIT_VERSION}" \
+        "libglu1-mesa=${LIBGLU1_MESA_VERSION}" \
+        "libsqlite3-dev=${LIBSQLITE3_DEV_VERSION}" \
+        "unzip=${UNZIP_VERSION}" \
+        "xz-utils=${XZ_UTILS_VERSION}" \
+        "zip=${ZIP_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /sdks /opt/android-sdk-linux/cmdline-tools \
     && curl --fail --location --retry 3 \
-        "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
+        "${FLUTTER_URL}" \
         --output /tmp/flutter.tar.xz \
     && echo "${FLUTTER_ARCHIVE_SHA256}  /tmp/flutter.tar.xz" | sha256sum --check - \
     && tar --extract --xz --file /tmp/flutter.tar.xz --directory /sdks \
@@ -49,7 +59,7 @@ RUN mkdir -p /sdks /opt/android-sdk-linux/cmdline-tools \
     && git config --system --add safe.directory /sdks/flutter
 
 RUN curl --fail --location --retry 3 \
-        "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_COMMAND_LINE_TOOLS_VERSION}_latest.zip" \
+        "${ANDROID_COMMAND_LINE_TOOLS_URL}" \
         --output /tmp/android-command-line-tools.zip \
     && echo "${ANDROID_COMMAND_LINE_TOOLS_SHA256}  /tmp/android-command-line-tools.zip" | sha256sum --check - \
     && unzip -q /tmp/android-command-line-tools.zip -d /tmp/android-command-line-tools \

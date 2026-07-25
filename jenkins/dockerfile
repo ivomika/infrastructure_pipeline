@@ -1,6 +1,9 @@
-FROM jenkins/jenkins:lts-jdk25@sha256:7644ea9234727bec75eaf24864a5c42c16052a85c81fddbebd5932b491e33118
+ARG JENKINS_CONTROLLER_BASE_IMAGE
+FROM ${JENKINS_CONTROLLER_BASE_IMAGE}
 
-ARG DEBIAN_SNAPSHOT=20260623T000000Z
+ARG DEBIAN_SNAPSHOT
+ARG GIT_VERSION
+ARG OPENSSH_CLIENT_VERSION
 
 USER root
 
@@ -11,8 +14,8 @@ RUN sed -i \
         /etc/apt/sources.list.d/debian.sources \
     && apt-get -o Acquire::Check-Valid-Until=false update \
     && apt-get install -y --no-install-recommends \
-        git=1:2.47.3-0+deb13u1 \
-        openssh-client=1:10.0p1-7+deb13u4 \
+        "git=${GIT_VERSION}" \
+        "openssh-client=${OPENSSH_CLIENT_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
 USER jenkins

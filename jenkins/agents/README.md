@@ -10,7 +10,8 @@ build-only services for three local agent images:
 Jenkins Docker Plugin creates and removes the actual agent containers on
 demand.
 
-Agent and toolchain versions and archive checksums are pinned in `agents.env`.
+Base images, agent image names, toolchain versions, artifact URLs, and archive
+checksums are pinned in [`../toolchain.lock`](../toolchain.lock).
 The Node.js agent contains Node.js LTS and npm. The Java agent contains JDK 21,
 Maven, and utilities required by Maven Wrapper and Gradle Wrapper.
 

@@ -1,10 +1,16 @@
-ARG JENKINS_INBOUND_AGENT_IMAGE=jenkins/inbound-agent:3355.v388858a_47b_33-14-jdk21@sha256:0d19619d2993f0809cb080a49136832305d2d568c2dcf84705039aac5258c7fc
+ARG JENKINS_INBOUND_AGENT_IMAGE
 FROM ${JENKINS_INBOUND_AGENT_IMAGE}
 
-ARG DEBIAN_SNAPSHOT=20260202T000000Z
+ARG DEBIAN_SNAPSHOT
+ARG CA_CERTIFICATES_VERSION
+ARG CURL_VERSION
+ARG GIT_VERSION
+ARG XZ_UTILS_VERSION
 ARG TARGETARCH
 ARG NODE_VERSION
+ARG NODE_LINUX_X64_URL
 ARG NODE_LINUX_X64_SHA256
+ARG NODE_LINUX_ARM64_URL
 ARG NODE_LINUX_ARM64_SHA256
 
 ENV NODE_HOME=/opt/node \
@@ -20,19 +26,19 @@ RUN sed -i \
         /etc/apt/sources.list.d/debian.sources \
     && apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates=20250419 \
-        curl=8.14.1-2+deb13u2 \
-        git=1:2.47.3-0+deb13u1 \
-        xz-utils=5.8.1-1 \
+        "ca-certificates=${CA_CERTIFICATES_VERSION}" \
+        "curl=${CURL_VERSION}" \
+        "git=${GIT_VERSION}" \
+        "xz-utils=${XZ_UTILS_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
 RUN case "${TARGETARCH}" in \
-        amd64) node_arch="x64"; node_sha256="${NODE_LINUX_X64_SHA256}" ;; \
-        arm64) node_arch="arm64"; node_sha256="${NODE_LINUX_ARM64_SHA256}" ;; \
+        amd64) node_url="${NODE_LINUX_X64_URL}"; node_sha256="${NODE_LINUX_X64_SHA256}" ;; \
+        arm64) node_url="${NODE_LINUX_ARM64_URL}"; node_sha256="${NODE_LINUX_ARM64_SHA256}" ;; \
         *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac \
     && curl --fail --location --retry 3 \
-        "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" \
+        "${node_url}" \
         --output /tmp/node.tar.xz \
     && echo "${node_sha256}  /tmp/node.tar.xz" | sha256sum --check - \
     && mkdir -p "${NODE_HOME}" \
