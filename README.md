@@ -3,6 +3,21 @@
 This repository builds a Jenkins controller and ephemeral Docker agents for
 Flutter, Java, and Node.js pipelines.
 
+## Bootstrap
+
+Prepare `jenkins/secrets/shared-library.key` and
+`jenkins/secrets/known_hosts`, then run:
+
+```bash
+make bootstrap
+```
+
+The target validates Docker and Compose, creates `.env` without overwriting an
+existing file, checks runtime configuration and locks, builds all images,
+starts the stack, and waits for the Jenkins login endpoint. If bootstrap
+creates `.env` from the template, set the real shared-library repository URL
+and run the same command again. Repeated successful runs are idempotent.
+
 ## Reproducible build contract
 
 Docker Compose **2.24.0 or newer** is required. Builds also require Docker
