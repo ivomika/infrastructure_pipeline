@@ -16,6 +16,7 @@ ARG FLUTTER_ARCHIVE_SHA256
 ARG ANDROID_COMMAND_LINE_TOOLS_VERSION
 ARG ANDROID_COMMAND_LINE_TOOLS_URL
 ARG ANDROID_COMMAND_LINE_TOOLS_SHA256
+ARG ANDROID_COMMAND_LINE_TOOLS_SHA1
 ARG ANDROID_PLATFORM_VERSION
 ARG ANDROID_BUILD_TOOLS_VERSION
 
@@ -62,6 +63,7 @@ RUN curl --fail --location --retry 3 \
         "${ANDROID_COMMAND_LINE_TOOLS_URL}" \
         --output /tmp/android-command-line-tools.zip \
     && echo "${ANDROID_COMMAND_LINE_TOOLS_SHA256}  /tmp/android-command-line-tools.zip" | sha256sum --check - \
+    && echo "${ANDROID_COMMAND_LINE_TOOLS_SHA1}  /tmp/android-command-line-tools.zip" | sha1sum --check - \
     && unzip -q /tmp/android-command-line-tools.zip -d /tmp/android-command-line-tools \
     && mv /tmp/android-command-line-tools/cmdline-tools /opt/android-sdk-linux/cmdline-tools/latest \
     && rm -rf /tmp/android-command-line-tools /tmp/android-command-line-tools.zip
