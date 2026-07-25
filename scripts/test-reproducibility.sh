@@ -47,6 +47,13 @@ source_date_epoch="$(git log -1 --format=%ct)"
   exit 1
 }
 export SOURCE_DATE_EPOCH="$source_date_epoch"
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+export JENKINS_ADMIN_ID=reproducibility
+export JENKINS_ADMIN_PASSWORD=reproducibility-only-password
+export SHARED_LIBRARY_NAME=reproducibility
+export SHARED_LIBRARY_REPOSITORY_URL=ssh://invalid/reproducibility.git
+export SHARED_LIBRARY_DEFAULT_BRANCH=main
+export SHARED_LIBRARY_CREDENTIALS_ID=reproducibility
 docker compose --profile agent-image config --format json >"$compose_json"
 
 services=()
@@ -66,34 +73,21 @@ build_image() {
   local builder="$1"
   local run="$2"
   local service="$3"
-  local context dockerfile archive
-  local -a build_args
+  local archive
 
-  context="$(jq -r --arg service "$service" '.services[$service].build.context' "$compose_json")"
-  dockerfile="$(jq -r --arg service "$service" '.services[$service].build.dockerfile' "$compose_json")"
   archive="${work_dir}/${run}/${service}.tar"
   mkdir -p "${work_dir}/${run}"
 
-  build_args=()
-  while IFS=$'\t' read -r key value; do
-    build_args+=(--build-arg "${key}=${value}")
-  done < <(
-    jq -r --arg service "$service" \
-      '.services[$service].build.args | to_entries[] | [.key, .value] | @tsv' \
-      "$compose_json"
-  )
-
   echo "test-reproducibility: building $service with $builder"
-  docker buildx build \
+  docker buildx bake \
     --builder "$builder" \
-    --file "${context}/${dockerfile}" \
-    --platform "$platform" \
-    --no-cache \
-    --pull \
-    --provenance=false \
-    --output "type=oci,dest=${archive},rewrite-timestamp=true" \
-    "${build_args[@]}" \
-    "$context"
+    --file compose.yaml \
+    --progress plain \
+    --set "${service}.no-cache=true" \
+    --set "${service}.pull=true" \
+    --set "${service}.platform=${platform}" \
+    --set "${service}.output=type=oci,dest=${archive},rewrite-timestamp=true" \
+    "$service"
 }
 
 write_metadata() {

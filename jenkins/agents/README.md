@@ -1,7 +1,7 @@
 # Jenkins Docker agents
 
-`compose.agents.yaml` is included by the root `compose.yaml`. It declares
-build-only services for three local agent images:
+`compose.agents.yaml` is included by the root `compose.yaml`. It declares a
+shared inbound-agent base plus build-only services for three toolchain images:
 
 - [`ivomika/flutter-agent:local`](flutter/README.md) with label `flutter`;
 - [`ivomika/nodejs-agent:local`](nodejs/README.md) with label `nodejs`;
@@ -9,6 +9,10 @@ build-only services for three local agent images:
 
 Jenkins Docker Plugin creates and removes the actual agent containers on
 demand.
+
+The shared base owns the pinned Debian snapshot, common Git/archive tools,
+`jenkins` user, and agent workspace. Each derived image installs only its own
+Node.js, Java/Maven, or Flutter/Android toolchain.
 
 Base images, agent image names, toolchain versions, artifact URLs, and archive
 checksums are pinned in [`../toolchain.lock`](../toolchain.lock).

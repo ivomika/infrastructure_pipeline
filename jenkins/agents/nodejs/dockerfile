@@ -1,22 +1,17 @@
-ARG JENKINS_INBOUND_AGENT_IMAGE
-FROM ${JENKINS_INBOUND_AGENT_IMAGE}
+ARG JENKINS_AGENT_BASE_IMAGE=agent-base
+FROM ${JENKINS_AGENT_BASE_IMAGE}
 
-ARG DEBIAN_SNAPSHOT
-ARG CA_CERTIFICATES_VERSION
-ARG CURL_VERSION
 ARG GCC_VERSION
-ARG GIT_VERSION
 ARG GXX_VERSION
 ARG MAKE_VERSION
-ARG PYTHON3_VERSION
-ARG XZ_UTILS_VERSION
-ARG TARGETARCH
-ARG NODE_VERSION
-ARG NODE_LINUX_X64_URL
-ARG NODE_LINUX_X64_SHA256
-ARG NODE_LINUX_ARM64_URL
 ARG NODE_LINUX_ARM64_SHA256
+ARG NODE_LINUX_ARM64_URL
+ARG NODE_LINUX_X64_SHA256
+ARG NODE_LINUX_X64_URL
+ARG NODE_VERSION
+ARG PYTHON3_VERSION
 ARG SOURCE_DATE_EPOCH
+ARG TARGETARCH
 
 ENV NODE_HOME=/opt/node \
     NPM_CONFIG_CACHE=/home/jenkins/.npm \
@@ -25,22 +20,12 @@ ENV NODE_HOME=/opt/node \
 
 USER root
 
-RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
-    && sed -i \
-        -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
-        -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
-        -e "/^Signed-By:/a Check-Valid-Until: no" \
-        /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Check-Valid-Until=false update \
+RUN apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        "ca-certificates=${CA_CERTIFICATES_VERSION}" \
-        "curl=${CURL_VERSION}" \
         "gcc=${GCC_VERSION}" \
-        "git=${GIT_VERSION}" \
         "g++=${GXX_VERSION}" \
         "make=${MAKE_VERSION}" \
         "python3=${PYTHON3_VERSION}" \
-        "xz-utils=${XZ_UTILS_VERSION}" \
     && rm -rf \
         /var/cache/apt/archives/* \
         /var/lib/apt/lists/* \
@@ -61,14 +46,13 @@ RUN case "${TARGETARCH}" in \
         --directory "${NODE_HOME}" \
         --strip-components=1 \
     && rm /tmp/node.tar.xz \
-    && mkdir -p /home/jenkins/agent "${NPM_CONFIG_CACHE}" \
+    && mkdir -p "${NPM_CONFIG_CACHE}" \
     && chown -R jenkins:jenkins /home/jenkins "${NODE_HOME}"
 
 USER jenkins
 
 RUN node --version \
     && npm --version \
-    && git --version \
     && python3 --version \
     && make --version \
     && g++ --version

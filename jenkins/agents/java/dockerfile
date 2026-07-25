@@ -1,15 +1,9 @@
-ARG JENKINS_INBOUND_AGENT_IMAGE
-FROM ${JENKINS_INBOUND_AGENT_IMAGE}
+ARG JENKINS_AGENT_BASE_IMAGE=agent-base
+FROM ${JENKINS_AGENT_BASE_IMAGE}
 
-ARG DEBIAN_SNAPSHOT
-ARG CA_CERTIFICATES_VERSION
-ARG CURL_VERSION
-ARG GIT_VERSION
-ARG UNZIP_VERSION
-ARG ZIP_VERSION
-ARG MAVEN_VERSION
-ARG MAVEN_URL
 ARG MAVEN_ARCHIVE_SHA512
+ARG MAVEN_URL
+ARG MAVEN_VERSION
 ARG SOURCE_DATE_EPOCH
 
 ENV MAVEN_HOME=/opt/maven \
@@ -18,25 +12,6 @@ ENV MAVEN_HOME=/opt/maven \
     SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 
 USER root
-
-RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
-    && sed -i \
-        -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
-        -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
-        -e "/^Signed-By:/a Check-Valid-Until: no" \
-        /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Check-Valid-Until=false update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        "ca-certificates=${CA_CERTIFICATES_VERSION}" \
-        "curl=${CURL_VERSION}" \
-        "git=${GIT_VERSION}" \
-        "unzip=${UNZIP_VERSION}" \
-        "zip=${ZIP_VERSION}" \
-    && rm -rf \
-        /var/cache/apt/archives/* \
-        /var/lib/apt/lists/* \
-        /var/log/apt/* \
-    && rm -f /var/log/dpkg.log
 
 RUN curl --fail --location --retry 3 \
         "${MAVEN_URL}" \
@@ -47,7 +22,7 @@ RUN curl --fail --location --retry 3 \
         --directory "${MAVEN_HOME}" \
         --strip-components=1 \
     && rm /tmp/maven.tar.gz \
-    && mkdir -p /home/jenkins/agent "${MAVEN_CONFIG}" /home/jenkins/.gradle \
+    && mkdir -p "${MAVEN_CONFIG}" /home/jenkins/.gradle \
     && chown -R jenkins:jenkins \
         /home/jenkins \
         "${MAVEN_HOME}"
@@ -56,5 +31,4 @@ USER jenkins
 
 RUN java -version \
     && javac -version \
-    && mvn --version \
-    && git --version
+    && mvn --version

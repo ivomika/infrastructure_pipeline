@@ -1,24 +1,17 @@
-ARG JENKINS_INBOUND_AGENT_IMAGE
-FROM ${JENKINS_INBOUND_AGENT_IMAGE}
+ARG JENKINS_AGENT_BASE_IMAGE=agent-base
+FROM ${JENKINS_AGENT_BASE_IMAGE}
 
-ARG DEBIAN_SNAPSHOT
-ARG CA_CERTIFICATES_VERSION
-ARG CURL_VERSION
-ARG GIT_VERSION
+ARG ANDROID_BUILD_TOOLS_VERSION
+ARG ANDROID_COMMAND_LINE_TOOLS_SHA1
+ARG ANDROID_COMMAND_LINE_TOOLS_SHA256
+ARG ANDROID_COMMAND_LINE_TOOLS_URL
+ARG ANDROID_COMMAND_LINE_TOOLS_VERSION
+ARG ANDROID_PLATFORM_VERSION
+ARG FLUTTER_ARCHIVE_SHA256
+ARG FLUTTER_URL
+ARG FLUTTER_VERSION
 ARG LIBGLU1_MESA_VERSION
 ARG LIBSQLITE3_DEV_VERSION
-ARG UNZIP_VERSION
-ARG XZ_UTILS_VERSION
-ARG ZIP_VERSION
-ARG FLUTTER_VERSION
-ARG FLUTTER_URL
-ARG FLUTTER_ARCHIVE_SHA256
-ARG ANDROID_COMMAND_LINE_TOOLS_VERSION
-ARG ANDROID_COMMAND_LINE_TOOLS_URL
-ARG ANDROID_COMMAND_LINE_TOOLS_SHA256
-ARG ANDROID_COMMAND_LINE_TOOLS_SHA1
-ARG ANDROID_PLATFORM_VERSION
-ARG ANDROID_BUILD_TOOLS_VERSION
 ARG SOURCE_DATE_EPOCH
 
 ENV FLUTTER_HOME=/sdks/flutter \
@@ -35,22 +28,10 @@ ENV FLUTTER_HOME=/sdks/flutter \
 
 USER root
 
-RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
-    && sed -i \
-        -e "s|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}|" \
-        -e "s|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}|" \
-        -e "/^Signed-By:/a Check-Valid-Until: no" \
-        /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Check-Valid-Until=false update \
+RUN apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        "ca-certificates=${CA_CERTIFICATES_VERSION}" \
-        "curl=${CURL_VERSION}" \
-        "git=${GIT_VERSION}" \
         "libglu1-mesa=${LIBGLU1_MESA_VERSION}" \
         "libsqlite3-dev=${LIBSQLITE3_DEV_VERSION}" \
-        "unzip=${UNZIP_VERSION}" \
-        "xz-utils=${XZ_UTILS_VERSION}" \
-        "zip=${ZIP_VERSION}" \
     && rm -rf \
         /var/cache/apt/archives/* \
         /var/lib/apt/lists/* \
@@ -82,7 +63,7 @@ RUN yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses >/dev/null \
         "platform-tools" \
         "platforms;android-${ANDROID_PLATFORM_VERSION}" \
         "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" \
-    && mkdir -p /home/jenkins/agent "${PUB_CACHE}" "${GRADLE_USER_HOME}" \
+    && mkdir -p "${PUB_CACHE}" "${GRADLE_USER_HOME}" \
     && mkdir -p /usr/lib/jvm \
     && if [ ! -e /usr/lib/jvm/java-21-openjdk-amd64 ]; then \
         ln -s "${JAVA_HOME}" /usr/lib/jvm/java-21-openjdk-amd64; \
