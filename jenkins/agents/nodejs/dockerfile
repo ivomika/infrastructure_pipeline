@@ -4,7 +4,11 @@ FROM ${JENKINS_INBOUND_AGENT_IMAGE}
 ARG DEBIAN_SNAPSHOT
 ARG CA_CERTIFICATES_VERSION
 ARG CURL_VERSION
+ARG GCC_VERSION
 ARG GIT_VERSION
+ARG GXX_VERSION
+ARG MAKE_VERSION
+ARG PYTHON3_VERSION
 ARG XZ_UTILS_VERSION
 ARG TARGETARCH
 ARG NODE_VERSION
@@ -31,7 +35,11 @@ RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         "ca-certificates=${CA_CERTIFICATES_VERSION}" \
         "curl=${CURL_VERSION}" \
+        "gcc=${GCC_VERSION}" \
         "git=${GIT_VERSION}" \
+        "g++=${GXX_VERSION}" \
+        "make=${MAKE_VERSION}" \
+        "python3=${PYTHON3_VERSION}" \
         "xz-utils=${XZ_UTILS_VERSION}" \
     && rm -rf \
         /var/cache/apt/archives/* \
@@ -60,4 +68,17 @@ USER jenkins
 
 RUN node --version \
     && npm --version \
-    && git --version
+    && git --version \
+    && python3 --version \
+    && make --version \
+    && g++ --version
+
+RUN --mount=type=bind,source=smoke/node-gyp,target=/tmp/node-gyp-source,readonly \
+    mkdir -p /home/jenkins/node-gyp-smoke \
+    && cp -R /tmp/node-gyp-source/. /home/jenkins/node-gyp-smoke/ \
+    && node "$(npm root --global)/npm/node_modules/node-gyp/bin/node-gyp.js" \
+        rebuild \
+        --directory /home/jenkins/node-gyp-smoke \
+        --nodedir "${NODE_HOME}" \
+    && node -e "const addon = require('/home/jenkins/node-gyp-smoke/build/Release/smoke.node'); if (addon.answer() !== 42) process.exit(1)" \
+    && rm -rf /home/jenkins/node-gyp-smoke

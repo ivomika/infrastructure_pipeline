@@ -1,2 +1,5 @@
 *
 !dockerfile
+!smoke/
+!smoke/node-gyp/
+!smoke/node-gyp/**

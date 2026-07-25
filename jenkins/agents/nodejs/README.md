@@ -1,6 +1,8 @@
 # Node.js Jenkins agent
 
-The `nodejs` agent contains Node.js LTS, npm, and Git.
+The `nodejs` agent contains Node.js LTS, npm, Git, Python, make, GCC, and G++.
+Native npm addons are supported and verified by compiling an N-API fixture with
+the `node-gyp` bundled in npm during every image build.
 
 Use it with:
 
