@@ -1,6 +1,7 @@
 *
 !jenkins/
 !jenkins/dockerfile
+!jenkins/validate-admin.sh
 !jenkins/plugins/
 !jenkins/plugins/plugins.txt
 !jenkins/plugins/plugins.lock.txt

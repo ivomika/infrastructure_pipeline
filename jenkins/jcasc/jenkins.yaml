@@ -66,13 +66,17 @@ jenkins:
               network: "${JENKINS_DOCKER_NETWORK}"
   securityRealm:
     local:
-      allowsSignup: true
+      allowsSignup: false
       users:
         - id: "${JENKINS_ADMIN_ID}"
-          password: "${JENKINS_ADMIN_PASSWORD}"
+          password: "${readFile:${JENKINS_ADMIN_PASSWORD_FILE}}"
   authorizationStrategy:
-    loggedInUsersCanDoAnything:
-      allowAnonymousRead: false
+    globalMatrix:
+      entries:
+        - user:
+            name: "${JENKINS_ADMIN_ID}"
+            permissions:
+              - "Overall/Administer"
 
 credentials:
   system:

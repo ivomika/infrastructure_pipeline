@@ -1,5 +1,6 @@
 *
 !dockerfile
+!validate-admin.sh
 !plugins/
 !plugins/plugins.txt
 !plugins/plugins.lock.txt

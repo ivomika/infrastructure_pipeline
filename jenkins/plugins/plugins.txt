@@ -5,6 +5,7 @@ credentials:1506.v948b_b_b_7dec44
 docker-plugin:1324.v2fb_b_df97fe1d
 git:5.10.1
 job-dsl:3654.vdf58f53e2d15
+matrix-auth:3.3
 pipeline-groovy-lib:798.v5cc688825312
 pipeline-stage-view:2.41
 ssh-credentials:372.va_250881b_08cd
