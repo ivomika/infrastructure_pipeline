@@ -119,6 +119,11 @@ source_date_epoch="$(git -C "$project_dir" log -1 --format=%ct)"
 export SOURCE_DATE_EPOCH="$source_date_epoch"
 
 cd "$project_dir"
+if $check_only; then
+  "${project_dir}/scripts/migrate-compose-project.sh" --check
+else
+  "${project_dir}/scripts/migrate-compose-project.sh"
+fi
 docker compose --profile agent-image config --quiet
 
 jenkins_container="$(docker compose ps -q jenkins)"

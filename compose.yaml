@@ -1,4 +1,4 @@
-name: infrastructure-pipelinse
+name: infrastructure-pipeline
 
 include:
   - path: ./jenkins/compose.yaml
