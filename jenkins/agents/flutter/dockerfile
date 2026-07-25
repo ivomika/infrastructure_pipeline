@@ -77,7 +77,7 @@ RUN curl --fail --location --retry 3 \
 
 ENV PATH="${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${ANDROID_SDK_ROOT}/emulator:${PUB_CACHE}/bin:${PATH}"
 
-RUN yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses >/dev/null || true \
+RUN yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses >/dev/null \
     && sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" \
         "platform-tools" \
         "platforms;android-${ANDROID_PLATFORM_VERSION}" \
@@ -95,6 +95,8 @@ RUN yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses >/dev/null || t
 USER jenkins
 
 RUN flutter config --no-analytics \
+    && flutter precache --android --web \
     && flutter --version \
     && dart --version \
-    && java -version
+    && java -version \
+    && flutter doctor --verbose
