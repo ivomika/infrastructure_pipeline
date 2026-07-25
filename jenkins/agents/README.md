@@ -31,62 +31,14 @@ Start Jenkins:
 docker compose up -d jenkins
 ```
 
-Pipelines request an ephemeral agent by label:
+Pipelines request an ephemeral agent by label. Keep examples in the
+agent-specific README files so there is one canonical copy:
 
-```groovy
-agent { label 'flutter' }
-```
-
-```groovy
-agent { label 'nodejs' }
-```
-
-```groovy
-agent { label 'java' }
-```
+- [Flutter Android and web pipeline](flutter/README.md#typical-android-and-web-pipeline);
+- [Node.js pipeline](nodejs/README.md#typical-nodejs-pipeline);
+- [Maven and Gradle pipelines](java/README.md#typical-maven-pipeline).
 
 The Java agent also accepts the `maven` and `backend` labels.
-
-Minimal Node.js backend pipeline:
-
-```groovy
-@Library('jenkins_libs') _
-
-pipeline {
-  agent { label 'nodejs' }
-
-  stages {
-    stage('Build and test') {
-      steps {
-        npmInstall()
-        npmTest()
-        npmBuild()
-      }
-    }
-  }
-}
-```
-
-Minimal Maven backend pipeline:
-
-```groovy
-@Library('jenkins_libs') _
-
-pipeline {
-  agent { label 'java' }
-
-  stages {
-    stage('Build and test') {
-      steps {
-        mavenBuild()
-      }
-    }
-  }
-}
-```
-
-`mavenBuild()` automatically uses Maven Wrapper when present. For a repository
-with Gradle Wrapper, use `gradleBuild()`.
 
 The inbound agent port `50000` is available only inside the `jenkins` Docker
 network. It does not need to be published on the host.
