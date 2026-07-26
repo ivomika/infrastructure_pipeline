@@ -52,4 +52,6 @@ reproducible only when two clean builds:
 A running container that behaves the same but has a different OCI digest does
 not satisfy this contract. Any intended dependency update must change a
 committed lock input and pass the two-build reproducibility check before it is
-merged.
+merged. See the
+[controlled dependency update workflow](jenkins/DEPENDENCY_UPDATES.md) for the
+bot, checksum refresh, security scan, smoke-test, and review gates.
