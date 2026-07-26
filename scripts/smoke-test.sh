@@ -5,6 +5,7 @@ set -euo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 env_file="${project_dir}/.env"
 work_dir="$(mktemp -d)"
+cookie_jar="${work_dir}/cookies"
 job_prefix="infrastructure-smoke-$$"
 created_jobs=()
 
@@ -13,6 +14,7 @@ cleanup() {
     for job in "${created_jobs[@]}"; do
       curl --fail --silent --show-error \
         --user "${admin_id}:${admin_password}" \
+        --cookie "$cookie_jar" \
         --header "${crumb_field}:${crumb}" \
         --request POST \
         "${jenkins_url}/job/${job}/doDelete" >/dev/null 2>&1 || true
@@ -89,8 +91,22 @@ curl --fail --silent --show-error \
 jq -e '.useSecurity == true and .numExecutors == 0' "${work_dir}/api.json" >/dev/null ||
   fail "Jenkins API does not expose the locked-down controller configuration"
 
+crumb_json="$(
+  curl --fail --silent --show-error \
+    --user "${admin_id}:${admin_password}" \
+    --cookie-jar "$cookie_jar" \
+    "${jenkins_url}/crumbIssuer/api/json"
+)"
+crumb_field="$(jq -r '.crumbRequestField' <<<"$crumb_json")"
+crumb="$(jq -r '.crumb' <<<"$crumb_json")"
+[[ -n "$crumb_field" && "$crumb_field" != "null" && -n "$crumb" && "$crumb" != "null" ]] ||
+  fail "Jenkins did not issue a CSRF crumb"
+
 curl --fail --silent --show-error \
   --user "${admin_id}:${admin_password}" \
+  --cookie "$cookie_jar" \
+  --header "${crumb_field}:${crumb}" \
+  --request POST \
   "${jenkins_url}/configuration-as-code/export" \
   --output "${work_dir}/jcasc.yaml"
 grep -Eq 'allowsSignup:[[:space:]]*false' "${work_dir}/jcasc.yaml" ||
@@ -105,16 +121,6 @@ docker compose exec -T jenkins \
   http://docker-socket-proxy:2375/_ping |
   grep -Fxq 'OK' ||
   fail "Jenkins cannot reach the Docker socket proxy"
-
-crumb_json="$(
-  curl --fail --silent --show-error \
-    --user "${admin_id}:${admin_password}" \
-    "${jenkins_url}/crumbIssuer/api/json"
-)"
-crumb_field="$(jq -r '.crumbRequestField' <<<"$crumb_json")"
-crumb="$(jq -r '.crumb' <<<"$crumb_json")"
-[[ -n "$crumb_field" && "$crumb_field" != "null" && -n "$crumb" && "$crumb" != "null" ]] ||
-  fail "Jenkins did not issue a CSRF crumb"
 
 run_agent_job() {
   local label="$1"
@@ -153,6 +159,7 @@ run_agent_job() {
 
   curl --fail --silent --show-error \
     --user "${admin_id}:${admin_password}" \
+    --cookie "$cookie_jar" \
     --header "${crumb_field}:${crumb}" \
     --header 'Content-Type: application/xml' \
     --request POST \
@@ -162,6 +169,7 @@ run_agent_job() {
 
   curl --fail --silent --show-error \
     --user "${admin_id}:${admin_password}" \
+    --cookie "$cookie_jar" \
     --header "${crumb_field}:${crumb}" \
     --request POST \
     --dump-header "$response_headers" \
