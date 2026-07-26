@@ -107,7 +107,7 @@ services:
     secrets:
       - source: jenkins-admin-password
         target: /run/secrets/jenkins-admin-password
-        mode: 0400
+        mode: 0444
       - source: shared-library-key
         target: /run/secrets/shared-library-key
         mode: 0400
