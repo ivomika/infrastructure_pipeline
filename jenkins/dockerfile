@@ -32,8 +32,10 @@ RUN test "${SOURCE_DATE_EPOCH}" -gt 0 \
 
 USER jenkins
 
-COPY plugins/plugins.lock.txt /usr/share/jenkins/ref/plugins.lock.txt
-COPY plugins/plugins.sha256 /usr/share/jenkins/ref/plugins.sha256
+COPY --chown=jenkins:jenkins --chmod=0644 \
+    plugins/plugins.lock.txt /usr/share/jenkins/ref/plugins.lock.txt
+COPY --chown=jenkins:jenkins --chmod=0644 \
+    plugins/plugins.sha256 /usr/share/jenkins/ref/plugins.sha256
 COPY --chmod=0755 validate-admin.sh /usr/local/bin/validate-admin.sh
 
 RUN jenkins-plugin-cli \
