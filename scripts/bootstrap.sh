@@ -99,8 +99,8 @@ library_branch="$(resolved_env SHARED_LIBRARY_DEFAULT_BRANCH)"
 library_credentials="$(resolved_env SHARED_LIBRARY_CREDENTIALS_ID)"
 
 [[ -n "$admin_id" ]] || fail "JENKINS_ADMIN_ID must not be empty"
-[[ "${#admin_password}" -ge 12 ]] ||
-  fail "JENKINS_ADMIN_PASSWORD must contain at least 12 characters"
+[[ "${#admin_password}" -ge 8 ]] ||
+  fail "JENKINS_ADMIN_PASSWORD must contain at least 8 characters"
 [[ "$admin_id/$admin_password" != "admin/admin" ]] ||
   fail "admin/admin credentials are forbidden"
 [[ -n "$library_name" ]] || fail "SHARED_LIBRARY_NAME must not be empty"
