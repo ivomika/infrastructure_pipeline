@@ -4,6 +4,7 @@ set -euo pipefail
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 toolchain_lock="${project_dir}/jenkins/toolchain.lock"
+plane_toolchain_lock="${project_dir}/plane/toolchain.lock"
 severity="${TRIVY_SEVERITY:-CRITICAL}"
 
 fail() {
@@ -16,10 +17,13 @@ for command in docker trivy; do
     fail "required command is unavailable: $command"
 done
 [[ -s "$toolchain_lock" ]] || fail "jenkins/toolchain.lock is missing"
+[[ -s "$plane_toolchain_lock" ]] || fail "plane/toolchain.lock is missing"
 
 set -a
 # shellcheck disable=SC1090
 source "$toolchain_lock"
+# shellcheck disable=SC1090
+source "$plane_toolchain_lock"
 set +a
 
 images=(
@@ -30,6 +34,16 @@ images=(
   "$NODEJS_AGENT_IMAGE"
   "$JAVA_AGENT_IMAGE"
   "$FLUTTER_AGENT_IMAGE"
+  "${PLANE_FRONTEND_IMAGE_TAG}@${PLANE_FRONTEND_IMAGE_DIGEST}"
+  "${PLANE_SPACE_IMAGE_TAG}@${PLANE_SPACE_IMAGE_DIGEST}"
+  "${PLANE_ADMIN_IMAGE_TAG}@${PLANE_ADMIN_IMAGE_DIGEST}"
+  "${PLANE_LIVE_IMAGE_TAG}@${PLANE_LIVE_IMAGE_DIGEST}"
+  "${PLANE_BACKEND_IMAGE_TAG}@${PLANE_BACKEND_IMAGE_DIGEST}"
+  "${PLANE_PROXY_IMAGE_TAG}@${PLANE_PROXY_IMAGE_DIGEST}"
+  "${PLANE_POSTGRES_IMAGE_TAG}@${PLANE_POSTGRES_IMAGE_DIGEST}"
+  "${PLANE_VALKEY_IMAGE_TAG}@${PLANE_VALKEY_IMAGE_DIGEST}"
+  "${PLANE_RABBITMQ_IMAGE_TAG}@${PLANE_RABBITMQ_IMAGE_DIGEST}"
+  "${PLANE_MINIO_IMAGE_TAG}@${PLANE_MINIO_IMAGE_DIGEST}"
 )
 
 for image in "${images[@]}"; do

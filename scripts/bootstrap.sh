@@ -91,8 +91,49 @@ if [[ ! -f "$env_file" ]]; then
   echo "bootstrap: created .env with a generated Jenkins admin password"
 fi
 
+ensure_generated_secret() {
+  local name="$1"
+  local description="$2"
+  local generated_value temporary_env
+
+  [[ -z "$(resolved_env "$name")" ]] || return 0
+
+  generated_value="$(openssl rand -hex 32)"
+  temporary_env="$(mktemp "${env_file}.XXXXXX")"
+  awk -v name="$name" -v value="$generated_value" '
+    index($0, name "=") == 1 {
+      print name "=" value
+      found=1
+      next
+    }
+    { print }
+    END {
+      if (!found) print name "=" value
+    }
+  ' "$env_file" >"$temporary_env"
+  chmod 600 "$temporary_env"
+  mv "$temporary_env" "$env_file"
+  unset generated_value
+  echo "bootstrap: generated ${description} in .env"
+}
+
+ensure_generated_secret PLANE_DB_PASSWORD "a Plane database password"
+ensure_generated_secret PLANE_REDIS_PASSWORD "a Plane Valkey password"
+ensure_generated_secret PLANE_RABBITMQ_PASSWORD "a Plane RabbitMQ password"
+ensure_generated_secret PLANE_MINIO_ROOT_PASSWORD "a Plane MinIO password"
+ensure_generated_secret PLANE_SECRET_KEY "a Plane application signing key"
+ensure_generated_secret PLANE_LIVE_SERVER_SECRET_KEY "a Plane live-server signing key"
+
 admin_id="$(resolved_env JENKINS_ADMIN_ID)"
 admin_password="$(resolved_env JENKINS_ADMIN_PASSWORD)"
+plane_db_password="$(resolved_env PLANE_DB_PASSWORD)"
+plane_redis_password="$(resolved_env PLANE_REDIS_PASSWORD)"
+plane_rabbitmq_password="$(resolved_env PLANE_RABBITMQ_PASSWORD)"
+plane_minio_root_user="$(resolved_env PLANE_MINIO_ROOT_USER)"
+plane_minio_root_user="${plane_minio_root_user:-plane}"
+plane_minio_root_password="$(resolved_env PLANE_MINIO_ROOT_PASSWORD)"
+plane_secret_key="$(resolved_env PLANE_SECRET_KEY)"
+plane_live_secret_key="$(resolved_env PLANE_LIVE_SERVER_SECRET_KEY)"
 library_name="$(resolved_env SHARED_LIBRARY_NAME)"
 library_url="$(resolved_env SHARED_LIBRARY_REPOSITORY_URL)"
 library_branch="$(resolved_env SHARED_LIBRARY_DEFAULT_BRANCH)"
@@ -103,12 +144,33 @@ library_credentials="$(resolved_env SHARED_LIBRARY_CREDENTIALS_ID)"
   fail "JENKINS_ADMIN_PASSWORD must contain at least 8 characters"
 [[ "$admin_id/$admin_password" != "admin/admin" ]] ||
   fail "admin/admin credentials are forbidden"
+[[ "${#plane_db_password}" -ge 16 && "$plane_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_DB_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#plane_redis_password}" -ge 16 && "$plane_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_REDIS_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#plane_rabbitmq_password}" -ge 16 && "$plane_rabbitmq_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_RABBITMQ_PASSWORD must contain at least 16 URL-safe characters"
+[[ -n "$plane_minio_root_user" ]] ||
+  fail "PLANE_MINIO_ROOT_USER must not be empty"
+[[ "${#plane_minio_root_password}" -ge 16 && "$plane_minio_root_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_MINIO_ROOT_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#plane_secret_key}" -ge 32 ]] ||
+  fail "PLANE_SECRET_KEY must contain at least 32 characters"
+[[ "${#plane_live_secret_key}" -ge 32 ]] ||
+  fail "PLANE_LIVE_SERVER_SECRET_KEY must contain at least 32 characters"
 [[ -n "$library_name" ]] || fail "SHARED_LIBRARY_NAME must not be empty"
 [[ -n "$library_url" && "$library_url" != *"your-org"* ]] ||
   fail "set SHARED_LIBRARY_REPOSITORY_URL in .env"
 [[ -n "$library_branch" ]] || fail "SHARED_LIBRARY_DEFAULT_BRANCH must not be empty"
 [[ -n "$library_credentials" ]] || fail "SHARED_LIBRARY_CREDENTIALS_ID must not be empty"
-unset admin_password
+unset \
+  admin_password \
+  plane_db_password \
+  plane_redis_password \
+  plane_rabbitmq_password \
+  plane_minio_root_password \
+  plane_secret_key \
+  plane_live_secret_key
 
 "${project_dir}/scripts/preflight-secrets.sh"
 "${project_dir}/scripts/verify-locks.sh" --offline
@@ -152,6 +214,31 @@ finally:
 PY
 fi
 
+plane_container="$(docker compose ps -q plane-proxy)"
+if [[ -z "$plane_container" ]]; then
+  plane_host_address="$(resolved_env PLANE_HOST_ADDRESS)"
+  plane_host_port="$(resolved_env PLANE_HTTP_PORT)"
+  plane_host_address="${plane_host_address:-127.0.0.1}"
+  plane_host_port="${plane_host_port:-9010}"
+  [[ "$plane_host_port" =~ ^[0-9]+$ && "$plane_host_port" -ge 1 && "$plane_host_port" -le 65535 ]] ||
+    fail "PLANE_HTTP_PORT must be between 1 and 65535"
+  python3 - "$plane_host_address" "$plane_host_port" <<'PY'
+import socket
+import sys
+
+host = sys.argv[1]
+port = int(sys.argv[2])
+family = socket.AF_INET6 if ":" in host else socket.AF_INET
+sock = socket.socket(family, socket.SOCK_STREAM)
+try:
+    sock.bind((host, port))
+except OSError as error:
+    raise SystemExit(f"bootstrap: Plane host port is unavailable: {host}:{port}: {error}")
+finally:
+    sock.close()
+PY
+fi
+
 if $check_only; then
   echo "bootstrap: all preflight checks passed"
   exit 0
@@ -183,6 +270,40 @@ until curl --fail --silent --show-error --output /dev/null "$readiness_url"; do
   sleep 5
 done
 
+plane_host_address="$(resolved_env PLANE_HOST_ADDRESS)"
+plane_host_port="$(resolved_env PLANE_HTTP_PORT)"
+plane_host_address="${plane_host_address:-127.0.0.1}"
+plane_host_port="${plane_host_port:-9010}"
+case "$plane_host_address" in
+  0.0.0.0) plane_readiness_host="127.0.0.1" ;;
+  ::) plane_readiness_host="[::1]" ;;
+  *:*) plane_readiness_host="[${plane_host_address}]" ;;
+  *) plane_readiness_host="$plane_host_address" ;;
+esac
+plane_readiness_url="http://${plane_readiness_host}:${plane_host_port}/"
+plane_timeout="$(resolved_env PLANE_BOOTSTRAP_TIMEOUT_SECONDS)"
+plane_timeout="${plane_timeout:-900}"
+[[ "$plane_timeout" =~ ^[0-9]+$ && "$plane_timeout" -gt 0 ]] ||
+  fail "PLANE_BOOTSTRAP_TIMEOUT_SECONDS must be a positive integer"
+plane_deadline=$((SECONDS + plane_timeout))
+
+until curl --fail --silent --show-error --output /dev/null "$plane_readiness_url"; do
+  if (( SECONDS >= plane_deadline )); then
+    docker compose logs --tail 100 \
+      plane-db \
+      plane-redis \
+      plane-mq \
+      plane-minio \
+      plane-migrator \
+      plane-api \
+      plane-proxy >&2 ||
+      true
+    fail "Plane did not become ready within ${plane_timeout}s"
+  fi
+  sleep 5
+done
+
 "${project_dir}/scripts/smoke-test.sh"
 
 echo "bootstrap: Jenkins is ready at http://${readiness_host}:${host_port}/"
+echo "bootstrap: Plane is ready at http://${plane_readiness_host}:${plane_host_port}/"

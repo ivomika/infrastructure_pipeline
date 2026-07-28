@@ -1,7 +1,8 @@
-# Jenkins infrastructure
+# Development infrastructure
 
 This repository builds a Jenkins controller and ephemeral Docker agents for
-Flutter, Java, and Node.js pipelines.
+Flutter, Java, and Node.js pipelines. It also runs a self-hosted Plane
+Community Edition instance and its private data services.
 
 ## Bootstrap
 
@@ -14,9 +15,13 @@ make bootstrap
 
 The target validates Docker and Compose, creates `.env` without overwriting an
 existing file, checks runtime configuration and locks, builds all images,
-starts the stack, and waits for the Jenkins login endpoint. If bootstrap
-creates `.env` from the template, set the real shared-library repository URL
-and run the same command again. Repeated successful runs are idempotent.
+starts the stack, and waits for Jenkins and Plane. If bootstrap creates `.env`
+from the template, set the real shared-library repository URL and run the same
+command again. Repeated successful runs are idempotent.
+
+Jenkins is published at `http://127.0.0.1:8080/` and Plane at
+`http://127.0.0.1:9010/`. Complete Plane's **Secure your instance** screen on
+the first visit. See the [Plane module documentation](plane/README.md).
 
 ## Reproducible build contract
 
@@ -26,10 +31,10 @@ engine.
 
 A build is defined entirely by the committed contents of:
 
-- `compose.yaml`, `jenkins/compose.yaml`, and
-  `jenkins/agents/compose.agents.yaml`;
+- `compose.yaml`, `jenkins/compose.yaml`,
+  `jenkins/agents/compose.agents.yaml`, and `plane/compose.yaml`;
 - every Dockerfile and `.dockerignore` in `jenkins/`;
-- `jenkins/toolchain.lock`;
+- `jenkins/toolchain.lock` and `plane/toolchain.lock`;
 - `jenkins/plugins/plugins.txt`;
 - `jenkins/jcasc/jenkins.yaml`;
 - `jenkins/docker-socket-proxy/haproxy.cfg.template`;

@@ -5,3 +5,5 @@ include:
     env_file: ./jenkins/toolchain.lock
   - path: ./jenkins/agents/compose.agents.yaml
     env_file: ./jenkins/toolchain.lock
+  - path: ./plane/compose.yaml
+    env_file: ./plane/toolchain.lock

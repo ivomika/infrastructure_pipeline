@@ -1,7 +1,10 @@
-.PHONY: backup bootstrap check-disk smoke
+.PHONY: backup bootstrap check-disk check-plane smoke start
 
 bootstrap:
 	@./scripts/bootstrap.sh
+
+start:
+	@./scripts/start.sh
 
 smoke:
 	@./scripts/smoke-test.sh
@@ -11,3 +14,6 @@ backup:
 
 check-disk:
 	@./scripts/check-disk-space.sh
+
+check-plane:
+	@./scripts/bootstrap.sh --check

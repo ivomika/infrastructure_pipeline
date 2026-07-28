@@ -22,7 +22,7 @@
       "customType": "regex",
       "description": "Update pinned container tags and their registry digests",
       "managerFilePatterns": [
-        "/^jenkins/toolchain\\.lock$/"
+        "/^(?:jenkins|plane)/toolchain\\.lock$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+) versioning=(?<versioning>[a-z-]+)\\n[A-Z][A-Z0-9_]*_TAG=[^\\n:]+(?::[^\\n:]+)*:(?<currentValue>[^\\n]+)\\n[A-Z][A-Z0-9_]*_DIGEST=(?<currentDigest>sha256:[a-f0-9]{64})"
@@ -75,6 +75,7 @@
     ],
     "fileFilters": [
       "jenkins/toolchain.lock",
+      "plane/toolchain.lock",
       "jenkins/plugins/plugins.lock.txt",
       "jenkins/plugins/plugins.sha256"
     ],
