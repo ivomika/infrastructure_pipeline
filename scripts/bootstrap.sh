@@ -91,8 +91,47 @@ if [[ ! -f "$env_file" ]]; then
   echo "bootstrap: created .env with a generated Jenkins admin password"
 fi
 
+ensure_generated_secret() {
+  local name="$1"
+  local description="$2"
+  local generated_value temporary_env
+
+  [[ -z "$(resolved_env "$name")" ]] || return 0
+
+  generated_value="$(openssl rand -hex 32)"
+  temporary_env="$(mktemp "${env_file}.XXXXXX")"
+  awk -v name="$name" -v value="$generated_value" '
+    index($0, name "=") == 1 {
+      print name "=" value
+      found=1
+      next
+    }
+    { print }
+    END {
+      if (!found) print name "=" value
+    }
+  ' "$env_file" >"$temporary_env"
+  chmod 600 "$temporary_env"
+  mv "$temporary_env" "$env_file"
+  unset generated_value
+  echo "bootstrap: generated ${description} in .env"
+}
+
+ensure_generated_secret DOCMOST_DB_PASSWORD "a Docmost database password"
+ensure_generated_secret DOCMOST_APP_SECRET "a Docmost application secret"
+ensure_generated_secret DOCMOST_REDIS_PASSWORD "a Docmost Redis password"
+ensure_generated_secret DOCMOST_OWNER_PASSWORD "a Docmost owner password"
+
 admin_id="$(resolved_env JENKINS_ADMIN_ID)"
 admin_password="$(resolved_env JENKINS_ADMIN_PASSWORD)"
+docmost_db_password="$(resolved_env DOCMOST_DB_PASSWORD)"
+docmost_app_secret="$(resolved_env DOCMOST_APP_SECRET)"
+docmost_redis_password="$(resolved_env DOCMOST_REDIS_PASSWORD)"
+docmost_owner_name="$(resolved_env DOCMOST_OWNER_NAME)"
+docmost_owner_email="$(resolved_env DOCMOST_OWNER_EMAIL)"
+docmost_owner_password="$(resolved_env DOCMOST_OWNER_PASSWORD)"
+docmost_workspace_name="$(resolved_env DOCMOST_WORKSPACE_NAME)"
+docmost_auto_setup="$(resolved_env DOCMOST_AUTO_SETUP)"
 library_name="$(resolved_env SHARED_LIBRARY_NAME)"
 library_url="$(resolved_env SHARED_LIBRARY_REPOSITORY_URL)"
 library_branch="$(resolved_env SHARED_LIBRARY_DEFAULT_BRANCH)"
@@ -103,12 +142,35 @@ library_credentials="$(resolved_env SHARED_LIBRARY_CREDENTIALS_ID)"
   fail "JENKINS_ADMIN_PASSWORD must contain at least 8 characters"
 [[ "$admin_id/$admin_password" != "admin/admin" ]] ||
   fail "admin/admin credentials are forbidden"
+[[ "${#docmost_db_password}" -ge 16 && "$docmost_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "DOCMOST_DB_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#docmost_app_secret}" -ge 32 ]] ||
+  fail "DOCMOST_APP_SECRET must contain at least 32 characters"
+[[ "${#docmost_redis_password}" -ge 16 && "$docmost_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "DOCMOST_REDIS_PASSWORD must contain at least 16 URL-safe characters"
+[[ -n "$docmost_owner_name" && "${#docmost_owner_name}" -le 50 ]] ||
+  fail "DOCMOST_OWNER_NAME must contain between 1 and 50 characters"
+[[ -n "$docmost_owner_email" && "$docmost_owner_email" == *@*.* ]] ||
+  fail "DOCMOST_OWNER_EMAIL must be a valid email address"
+[[ "${#docmost_owner_password}" -ge 8 && "${#docmost_owner_password}" -le 70 ]] ||
+  fail "DOCMOST_OWNER_PASSWORD must contain between 8 and 70 characters"
+[[ -n "$docmost_workspace_name" && "${#docmost_workspace_name}" -le 50 ]] ||
+  fail "DOCMOST_WORKSPACE_NAME must contain between 1 and 50 characters"
+case "$docmost_auto_setup" in
+  true | false) ;;
+  *) fail "DOCMOST_AUTO_SETUP must be true or false" ;;
+esac
 [[ -n "$library_name" ]] || fail "SHARED_LIBRARY_NAME must not be empty"
 [[ -n "$library_url" && "$library_url" != *"your-org"* ]] ||
   fail "set SHARED_LIBRARY_REPOSITORY_URL in .env"
 [[ -n "$library_branch" ]] || fail "SHARED_LIBRARY_DEFAULT_BRANCH must not be empty"
 [[ -n "$library_credentials" ]] || fail "SHARED_LIBRARY_CREDENTIALS_ID must not be empty"
-unset admin_password
+unset \
+  admin_password \
+  docmost_db_password \
+  docmost_app_secret \
+  docmost_redis_password \
+  docmost_owner_password
 
 "${project_dir}/scripts/preflight-secrets.sh"
 "${project_dir}/scripts/verify-locks.sh" --offline
@@ -152,6 +214,31 @@ finally:
 PY
 fi
 
+docmost_container="$(docker compose ps -q docmost)"
+if [[ -z "$docmost_container" ]]; then
+  docmost_host_address="$(resolved_env DOCMOST_HOST_ADDRESS)"
+  docmost_host_port="$(resolved_env DOCMOST_HTTP_PORT)"
+  docmost_host_address="${docmost_host_address:-127.0.0.1}"
+  docmost_host_port="${docmost_host_port:-3000}"
+  [[ "$docmost_host_port" =~ ^[0-9]+$ && "$docmost_host_port" -ge 1 && "$docmost_host_port" -le 65535 ]] ||
+    fail "DOCMOST_HTTP_PORT must be between 1 and 65535"
+  python3 - "$docmost_host_address" "$docmost_host_port" <<'PY'
+import socket
+import sys
+
+host = sys.argv[1]
+port = int(sys.argv[2])
+family = socket.AF_INET6 if ":" in host else socket.AF_INET
+sock = socket.socket(family, socket.SOCK_STREAM)
+try:
+    sock.bind((host, port))
+except OSError as error:
+    raise SystemExit(f"bootstrap: Docmost host port is unavailable: {host}:{port}: {error}")
+finally:
+    sock.close()
+PY
+fi
+
 if $check_only; then
   echo "bootstrap: all preflight checks passed"
   exit 0
@@ -183,6 +270,36 @@ until curl --fail --silent --show-error --output /dev/null "$readiness_url"; do
   sleep 5
 done
 
+docmost_host_address="$(resolved_env DOCMOST_HOST_ADDRESS)"
+docmost_host_port="$(resolved_env DOCMOST_HTTP_PORT)"
+docmost_host_address="${docmost_host_address:-127.0.0.1}"
+docmost_host_port="${docmost_host_port:-3000}"
+case "$docmost_host_address" in
+  0.0.0.0) docmost_readiness_host="127.0.0.1" ;;
+  ::) docmost_readiness_host="[::1]" ;;
+  *:*) docmost_readiness_host="[${docmost_host_address}]" ;;
+  *) docmost_readiness_host="$docmost_host_address" ;;
+esac
+docmost_readiness_url="http://${docmost_readiness_host}:${docmost_host_port}/api/health"
+docmost_timeout="$(resolved_env DOCMOST_BOOTSTRAP_TIMEOUT_SECONDS)"
+docmost_timeout="${docmost_timeout:-600}"
+[[ "$docmost_timeout" =~ ^[0-9]+$ && "$docmost_timeout" -gt 0 ]] ||
+  fail "DOCMOST_BOOTSTRAP_TIMEOUT_SECONDS must be a positive integer"
+docmost_deadline=$((SECONDS + docmost_timeout))
+
+until curl --fail --silent --show-error --output /dev/null "$docmost_readiness_url"; do
+  if (( SECONDS >= docmost_deadline )); then
+    docker compose logs --tail 100 docmost-db docmost-redis docmost >&2 || true
+    fail "Docmost did not become ready within ${docmost_timeout}s"
+  fi
+  sleep 5
+done
+
+if [[ "$docmost_auto_setup" == "true" ]]; then
+  "${project_dir}/docmost/setup.sh"
+fi
+
 "${project_dir}/scripts/smoke-test.sh"
 
 echo "bootstrap: Jenkins is ready at http://${readiness_host}:${host_port}/"
+echo "bootstrap: Docmost is ready at http://${docmost_readiness_host}:${docmost_host_port}/"

@@ -4,6 +4,7 @@ set -euo pipefail
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 toolchain_lock="${project_dir}/jenkins/toolchain.lock"
+docmost_toolchain_lock="${project_dir}/docmost/toolchain.lock"
 direct_plugins="${project_dir}/jenkins/plugins/plugins.txt"
 plugin_lock="${project_dir}/jenkins/plugins/plugins.lock.txt"
 plugin_checksums="${project_dir}/jenkins/plugins/plugins.sha256"
@@ -27,16 +28,22 @@ fi
   exit 2
 }
 
-for file in "$toolchain_lock" "$direct_plugins" "$plugin_lock" "$plugin_checksums"; do
+for file in "$toolchain_lock" "$docmost_toolchain_lock" "$direct_plugins" "$plugin_lock" "$plugin_checksums"; do
   [[ -s "$file" ]] || fail "missing or empty input: ${file#"$project_dir"/}"
 done
 
-invalid_lock_line="$(grep -Ev '^(#.*|[[:space:]]*|[A-Z][A-Z0-9_]*=[^[:space:]]+)$' "$toolchain_lock" || true)"
+invalid_lock_line="$(grep -EHv \
+  '^(#.*|[[:space:]]*|[A-Z][A-Z0-9_]*=[^[:space:]]+)$' \
+  "$toolchain_lock" \
+  "$docmost_toolchain_lock" ||
+  true)"
 [[ -z "$invalid_lock_line" ]] || fail "toolchain.lock contains an invalid line: $invalid_lock_line"
 
 set -a
 # shellcheck disable=SC1090
 source "$toolchain_lock"
+# shellcheck disable=SC1090
+source "$docmost_toolchain_lock"
 set +a
 
 required_values=(
@@ -88,6 +95,15 @@ required_values=(
   ANDROID_COMMAND_LINE_TOOLS_SHA1
   ANDROID_PLATFORM_VERSION
   ANDROID_BUILD_TOOLS_VERSION
+  DOCMOST_IMAGE_TAG
+  DOCMOST_IMAGE_DIGEST
+  DOCMOST_VERSION
+  DOCMOST_POSTGRES_IMAGE_TAG
+  DOCMOST_POSTGRES_IMAGE_DIGEST
+  DOCMOST_POSTGRES_VERSION
+  DOCMOST_REDIS_IMAGE_TAG
+  DOCMOST_REDIS_IMAGE_DIGEST
+  DOCMOST_REDIS_VERSION
 )
 
 for name in "${required_values[@]}"; do
@@ -97,7 +113,10 @@ done
 for digest in \
   "$JENKINS_CONTROLLER_BASE_DIGEST" \
   "$JENKINS_INBOUND_AGENT_DIGEST" \
-  "$DOCKER_SOCKET_PROXY_DIGEST"; do
+  "$DOCKER_SOCKET_PROXY_DIGEST" \
+  "$DOCMOST_IMAGE_DIGEST" \
+  "$DOCMOST_POSTGRES_IMAGE_DIGEST" \
+  "$DOCMOST_REDIS_IMAGE_DIGEST"; do
   [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || fail "invalid OCI digest: $digest"
 done
 
@@ -198,6 +217,9 @@ verify_url() {
 verify_image_digest "$JENKINS_CONTROLLER_BASE_TAG" "$JENKINS_CONTROLLER_BASE_DIGEST"
 verify_image_digest "$JENKINS_INBOUND_AGENT_TAG" "$JENKINS_INBOUND_AGENT_DIGEST"
 verify_image_digest "$DOCKER_SOCKET_PROXY_TAG" "$DOCKER_SOCKET_PROXY_DIGEST"
+verify_image_digest "$DOCMOST_IMAGE_TAG" "$DOCMOST_IMAGE_DIGEST"
+verify_image_digest "$DOCMOST_POSTGRES_IMAGE_TAG" "$DOCMOST_POSTGRES_IMAGE_DIGEST"
+verify_image_digest "$DOCMOST_REDIS_IMAGE_TAG" "$DOCMOST_REDIS_IMAGE_DIGEST"
 
 for url in \
   "$NODE_LINUX_X64_URL" \

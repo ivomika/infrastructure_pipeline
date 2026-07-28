@@ -8,6 +8,8 @@ on:
       - ".github/workflows/reproducibility.yml"
       - "renovate.json"
       - "jenkins/toolchain.lock"
+      - "docmost/toolchain.lock"
+      - "docmost/**"
       - "jenkins/plugins/**"
       - "scripts/refresh-locks.sh"
       - "scripts/security-scan.sh"
@@ -53,6 +55,13 @@ jobs:
       JENKINS_HTTP_PORT: 18080
       JENKINS_ADMIN_ID: dependency-ci
       JENKINS_ADMIN_PASSWORD: dependency-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      DOCMOST_HOST_ADDRESS: 127.0.0.1
+      DOCMOST_HTTP_PORT: 13000
+      DOCMOST_APP_URL: http://127.0.0.1:13000
+      DOCMOST_DB_PASSWORD: dependency-docmost-db-${{ github.run_id }}-${{ github.run_attempt }}
+      DOCMOST_APP_SECRET: dependency-docmost-app-secret-${{ github.run_id }}-${{ github.run_attempt }}
+      DOCMOST_REDIS_PASSWORD: dependency-docmost-redis-${{ github.run_id }}-${{ github.run_attempt }}
+      DOCMOST_OWNER_PASSWORD: dependency-docmost-owner-${{ github.run_id }}-${{ github.run_attempt }}
       SHARED_LIBRARY_NAME: dependency-ci
       SHARED_LIBRARY_REPOSITORY_URL: ssh://git@invalid/dependency-ci.git
       SHARED_LIBRARY_DEFAULT_BRANCH: main

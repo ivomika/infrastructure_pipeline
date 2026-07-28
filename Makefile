@@ -1,4 +1,4 @@
-.PHONY: backup bootstrap check-disk smoke
+.PHONY: backup bootstrap check-disk check-docmost setup-docmost smoke
 
 bootstrap:
 	@./scripts/bootstrap.sh
@@ -11,3 +11,9 @@ backup:
 
 check-disk:
 	@./scripts/check-disk-space.sh
+
+check-docmost:
+	@./docmost/setup.sh --check
+
+setup-docmost:
+	@./docmost/setup.sh

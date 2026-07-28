@@ -1,0 +1,15 @@
+# Immutable Docmost image
+# renovate: datasource=docker depName=docmost/docmost versioning=docker
+DOCMOST_IMAGE_TAG=docmost/docmost:0.95.0
+DOCMOST_IMAGE_DIGEST=sha256:41c8d777cf23c74e78f94e676aec328b7d7856f48df5e573543dac68d371e37c
+DOCMOST_VERSION=0.95.0
+
+# Immutable infrastructure images
+# renovate: datasource=docker depName=postgres versioning=docker
+DOCMOST_POSTGRES_IMAGE_TAG=postgres:18.4-bookworm
+DOCMOST_POSTGRES_IMAGE_DIGEST=sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
+DOCMOST_POSTGRES_VERSION=18.4
+# renovate: datasource=docker depName=redis versioning=docker
+DOCMOST_REDIS_IMAGE_TAG=redis:8.8.1-alpine
+DOCMOST_REDIS_IMAGE_DIGEST=sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
+DOCMOST_REDIS_VERSION=8.8.1

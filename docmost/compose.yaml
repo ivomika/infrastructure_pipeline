@@ -1,0 +1,168 @@
+services:
+  docmost-db:
+    image: ${DOCMOST_POSTGRES_IMAGE_TAG:?DOCMOST_POSTGRES_IMAGE_TAG is required}@${DOCMOST_POSTGRES_IMAGE_DIGEST:?DOCMOST_POSTGRES_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${DOCMOST_DB_MEMORY_LIMIT:-1g}
+    cpus: ${DOCMOST_DB_CPU_LIMIT:-1.0}
+    pids_limit: ${DOCMOST_DB_PIDS_LIMIT:-256}
+    shm_size: ${DOCMOST_DB_SHM_SIZE:-256m}
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-5}
+    environment:
+      POSTGRES_DB: ${DOCMOST_DB_NAME:-docmost}
+      POSTGRES_USER: ${DOCMOST_DB_USER:-docmost}
+      POSTGRES_PASSWORD_FILE: /run/secrets/docmost-db-password
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready
+          --username "$${POSTGRES_USER}"
+          --dbname "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - docmost_db:/var/lib/postgresql
+    secrets:
+      - source: docmost-db-password
+        target: /run/secrets/docmost-db-password
+    networks:
+      - docmost
+
+  docmost-redis:
+    image: ${DOCMOST_REDIS_IMAGE_TAG:?DOCMOST_REDIS_IMAGE_TAG is required}@${DOCMOST_REDIS_IMAGE_DIGEST:?DOCMOST_REDIS_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${DOCMOST_REDIS_MEMORY_LIMIT:-512m}
+    cpus: ${DOCMOST_REDIS_CPU_LIMIT:-0.5}
+    pids_limit: ${DOCMOST_REDIS_PIDS_LIMIT:-128}
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-5}
+    environment:
+      DOCMOST_REDIS_PASSWORD_FILE: /run/secrets/docmost-redis-password
+    entrypoint:
+      - /bin/sh
+      - /opt/docmost/load-secrets.sh
+      - /bin/sh
+      - /opt/docmost/start-redis.sh
+    healthcheck:
+      test:
+        - CMD
+        - /bin/sh
+        - /opt/docmost/load-secrets.sh
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - docmost_redis:/data
+      - ./load-secrets.sh:/opt/docmost/load-secrets.sh:ro
+      - ./start-redis.sh:/opt/docmost/start-redis.sh:ro
+    secrets:
+      - source: docmost-redis-password
+        target: /run/secrets/docmost-redis-password
+    networks:
+      - docmost
+
+  docmost:
+    image: ${DOCMOST_IMAGE_TAG:?DOCMOST_IMAGE_TAG is required}@${DOCMOST_IMAGE_DIGEST:?DOCMOST_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${DOCMOST_MEMORY_LIMIT:-2g}
+    cpus: ${DOCMOST_CPU_LIMIT:-1.5}
+    pids_limit: ${DOCMOST_PIDS_LIMIT:-512}
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-5}
+    environment:
+      APP_URL: ${DOCMOST_APP_URL:-http://127.0.0.1:3000}
+      APP_SECRET_FILE: /run/secrets/docmost-app-secret
+      PORT: "3000"
+      DOCMOST_DB_HOST: docmost-db
+      DOCMOST_DB_PORT: "5432"
+      DOCMOST_DB_NAME: ${DOCMOST_DB_NAME:-docmost}
+      DOCMOST_DB_USER: ${DOCMOST_DB_USER:-docmost}
+      DOCMOST_DB_PASSWORD_FILE: /run/secrets/docmost-db-password
+      DOCMOST_REDIS_HOST: docmost-redis
+      DOCMOST_REDIS_PORT: "6379"
+      DOCMOST_REDIS_PASSWORD_FILE: /run/secrets/docmost-redis-password
+      STORAGE_DRIVER: ${DOCMOST_STORAGE_DRIVER:-local}
+      FILE_UPLOAD_SIZE_LIMIT: ${DOCMOST_FILE_UPLOAD_SIZE_LIMIT:-50mb}
+      FILE_IMPORT_SIZE_LIMIT: ${DOCMOST_FILE_IMPORT_SIZE_LIMIT:-200mb}
+      DISABLE_TELEMETRY: ${DOCMOST_DISABLE_TELEMETRY:-true}
+      DOCMOST_MAIL_DRIVER: ${DOCMOST_MAIL_DRIVER:-}
+      DOCMOST_SMTP_HOST: ${DOCMOST_SMTP_HOST:-}
+      DOCMOST_SMTP_PORT: ${DOCMOST_SMTP_PORT:-587}
+      DOCMOST_SMTP_USERNAME: ${DOCMOST_SMTP_USERNAME:-}
+      DOCMOST_SMTP_PASSWORD: ${DOCMOST_SMTP_PASSWORD:-}
+      DOCMOST_SMTP_SECURE: ${DOCMOST_SMTP_SECURE:-false}
+      DOCMOST_MAIL_FROM_ADDRESS: ${DOCMOST_MAIL_FROM_ADDRESS:-}
+      DOCMOST_MAIL_FROM_NAME: ${DOCMOST_MAIL_FROM_NAME:-Docmost}
+    entrypoint:
+      - /bin/sh
+      - /opt/docmost/load-secrets.sh
+      - docker-entrypoint.sh
+    command:
+      - pnpm
+      - start
+    ports:
+      - "${DOCMOST_HOST_ADDRESS:-127.0.0.1}:${DOCMOST_HTTP_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - --fail
+        - --silent
+        - --show-error
+        - http://127.0.0.1:3000/api/health
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - docmost_storage:/app/data/storage
+      - ./load-secrets.sh:/opt/docmost/load-secrets.sh:ro
+    secrets:
+      - source: docmost-app-secret
+        target: /run/secrets/docmost-app-secret
+      - source: docmost-db-password
+        target: /run/secrets/docmost-db-password
+      - source: docmost-redis-password
+        target: /run/secrets/docmost-redis-password
+    depends_on:
+      docmost-db:
+        condition: service_healthy
+      docmost-redis:
+        condition: service_healthy
+    networks:
+      - docmost
+
+volumes:
+  docmost_db:
+    name: ${DOCMOST_DB_VOLUME:-infrastructure-pipeline_docmost_db}
+  docmost_redis:
+    name: ${DOCMOST_REDIS_VOLUME:-infrastructure-pipeline_docmost_redis}
+  docmost_storage:
+    name: ${DOCMOST_STORAGE_VOLUME:-infrastructure-pipeline_docmost_storage}
+
+secrets:
+  docmost-db-password:
+    environment: DOCMOST_DB_PASSWORD
+  docmost-app-secret:
+    environment: DOCMOST_APP_SECRET
+  docmost-redis-password:
+    environment: DOCMOST_REDIS_PASSWORD
+
+networks:
+  docmost:

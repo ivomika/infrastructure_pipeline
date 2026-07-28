@@ -4,6 +4,7 @@ set -euo pipefail
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 toolchain_lock="${project_dir}/jenkins/toolchain.lock"
+docmost_toolchain_lock="${project_dir}/docmost/toolchain.lock"
 severity="${TRIVY_SEVERITY:-CRITICAL}"
 
 fail() {
@@ -16,10 +17,13 @@ for command in docker trivy; do
     fail "required command is unavailable: $command"
 done
 [[ -s "$toolchain_lock" ]] || fail "jenkins/toolchain.lock is missing"
+[[ -s "$docmost_toolchain_lock" ]] || fail "docmost/toolchain.lock is missing"
 
 set -a
 # shellcheck disable=SC1090
 source "$toolchain_lock"
+# shellcheck disable=SC1090
+source "$docmost_toolchain_lock"
 set +a
 
 images=(
@@ -30,6 +34,9 @@ images=(
   "$NODEJS_AGENT_IMAGE"
   "$JAVA_AGENT_IMAGE"
   "$FLUTTER_AGENT_IMAGE"
+  "${DOCMOST_IMAGE_TAG}@${DOCMOST_IMAGE_DIGEST}"
+  "${DOCMOST_POSTGRES_IMAGE_TAG}@${DOCMOST_POSTGRES_IMAGE_DIGEST}"
+  "${DOCMOST_REDIS_IMAGE_TAG}@${DOCMOST_REDIS_IMAGE_DIGEST}"
 )
 
 for image in "${images[@]}"; do
