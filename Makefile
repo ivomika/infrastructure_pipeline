@@ -1,7 +1,10 @@
-.PHONY: backup bootstrap check-disk check-docmost setup-docmost smoke
+.PHONY: backup bootstrap check-disk check-docmost check-plane setup-docmost smoke start
 
 bootstrap:
 	@./scripts/bootstrap.sh
+
+start:
+	@./scripts/start.sh
 
 smoke:
 	@./scripts/smoke-test.sh
@@ -17,3 +20,6 @@ check-docmost:
 
 setup-docmost:
 	@./docmost/setup.sh
+
+check-plane:
+	@./scripts/bootstrap.sh --check

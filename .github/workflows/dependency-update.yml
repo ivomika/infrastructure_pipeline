@@ -10,6 +10,8 @@ on:
       - "jenkins/toolchain.lock"
       - "docmost/toolchain.lock"
       - "docmost/**"
+      - "plane/toolchain.lock"
+      - "plane/**"
       - "jenkins/plugins/**"
       - "scripts/refresh-locks.sh"
       - "scripts/security-scan.sh"
@@ -62,6 +64,17 @@ jobs:
       DOCMOST_APP_SECRET: dependency-docmost-app-secret-${{ github.run_id }}-${{ github.run_attempt }}
       DOCMOST_REDIS_PASSWORD: dependency-docmost-redis-${{ github.run_id }}-${{ github.run_attempt }}
       DOCMOST_OWNER_PASSWORD: dependency-docmost-owner-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_HOST_ADDRESS: 127.0.0.1
+      PLANE_HTTP_PORT: 19010
+      PLANE_APP_DOMAIN: 127.0.0.1
+      PLANE_WEB_URL: http://127.0.0.1:19010
+      PLANE_CORS_ALLOWED_ORIGINS: http://127.0.0.1:19010
+      PLANE_DB_PASSWORD: dependency-plane-db-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_REDIS_PASSWORD: dependency-plane-redis-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_RABBITMQ_PASSWORD: dependency-plane-rabbit-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_MINIO_ROOT_PASSWORD: dependency-plane-minio-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_SECRET_KEY: dependency-plane-secret-${{ github.run_id }}-${{ github.run_attempt }}
+      PLANE_LIVE_SERVER_SECRET_KEY: dependency-plane-live-${{ github.run_id }}-${{ github.run_attempt }}
       SHARED_LIBRARY_NAME: dependency-ci
       SHARED_LIBRARY_REPOSITORY_URL: ssh://git@invalid/dependency-ci.git
       SHARED_LIBRARY_DEFAULT_BRANCH: main

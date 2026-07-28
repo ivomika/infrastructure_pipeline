@@ -1,0 +1,384 @@
+x-logging: &plane-logging
+  driver: json-file
+  options:
+    max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+    max-file: ${DOCKER_LOG_MAX_FILES:-5}
+
+x-app-environment: &plane-app-environment
+  WEB_URL: ${PLANE_WEB_URL:-http://127.0.0.1:9010}
+  DEBUG: "0"
+  CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://127.0.0.1:9010}
+  GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+  USE_MINIO: "1"
+  PGHOST: plane-db
+  PGDATABASE: ${PLANE_DB_NAME:-plane}
+  POSTGRES_USER: ${PLANE_DB_USER:-plane}
+  POSTGRES_PASSWORD: ${PLANE_DB_PASSWORD:?PLANE_DB_PASSWORD is required}
+  POSTGRES_DB: ${PLANE_DB_NAME:-plane}
+  POSTGRES_PORT: "5432"
+  DATABASE_URL: postgresql://${PLANE_DB_USER:-plane}:${PLANE_DB_PASSWORD:?PLANE_DB_PASSWORD is required}@plane-db:5432/${PLANE_DB_NAME:-plane}
+  REDIS_HOST: plane-redis
+  REDIS_PORT: "6379"
+  REDIS_URL: redis://:${PLANE_REDIS_PASSWORD:?PLANE_REDIS_PASSWORD is required}@plane-redis:6379/0
+  RABBITMQ_HOST: plane-mq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: ${PLANE_RABBITMQ_USER:-plane}
+  RABBITMQ_PASSWORD: ${PLANE_RABBITMQ_PASSWORD:?PLANE_RABBITMQ_PASSWORD is required}
+  RABBITMQ_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
+  AMQP_URL: amqp://${PLANE_RABBITMQ_USER:-plane}:${PLANE_RABBITMQ_PASSWORD:?PLANE_RABBITMQ_PASSWORD is required}@plane-mq:5672/${PLANE_RABBITMQ_VHOST:-plane}
+  SECRET_KEY: ${PLANE_SECRET_KEY:?PLANE_SECRET_KEY is required}
+  LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:?PLANE_LIVE_SERVER_SECRET_KEY is required}
+  API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+  MINIO_ENDPOINT_SSL: "0"
+  AWS_REGION: ${PLANE_AWS_REGION:-}
+  AWS_ACCESS_KEY_ID: ${PLANE_MINIO_ROOT_USER:-plane}
+  AWS_SECRET_ACCESS_KEY: ${PLANE_MINIO_ROOT_PASSWORD:?PLANE_MINIO_ROOT_PASSWORD is required}
+  AWS_S3_ENDPOINT_URL: http://plane-minio:9000
+  AWS_S3_BUCKET_NAME: ${PLANE_MINIO_BUCKET:-uploads}
+  MINIO_ROOT_USER: ${PLANE_MINIO_ROOT_USER:-plane}
+  MINIO_ROOT_PASSWORD: ${PLANE_MINIO_ROOT_PASSWORD:?PLANE_MINIO_ROOT_PASSWORD is required}
+  FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+  WEBHOOK_ALLOWED_IPS: ${PLANE_WEBHOOK_ALLOWED_IPS:-}
+  WEBHOOK_ALLOWED_HOSTS: ${PLANE_WEBHOOK_ALLOWED_HOSTS:-}
+  APP_DOMAIN: ${PLANE_APP_DOMAIN:-127.0.0.1}
+  SITE_ADDRESS: ":80"
+  LISTEN_HTTP_PORT: "80"
+  LISTEN_HTTPS_PORT: "443"
+  BUCKET_NAME: ${PLANE_MINIO_BUCKET:-uploads}
+
+services:
+  plane-db:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-db
+    image: ${PLANE_POSTGRES_IMAGE_TAG:?PLANE_POSTGRES_IMAGE_TAG is required}@${PLANE_POSTGRES_IMAGE_DIGEST:?PLANE_POSTGRES_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_DB_MEMORY_LIMIT:-1g}
+    cpus: ${PLANE_DB_CPU_LIMIT:-1.0}
+    pids_limit: ${PLANE_DB_PIDS_LIMIT:-256}
+    shm_size: ${PLANE_DB_SHM_SIZE:-256m}
+    logging: *plane-logging
+    command:
+      - postgres
+      - -c
+      - max_connections=1000
+    environment:
+      POSTGRES_DB: ${PLANE_DB_NAME:-plane}
+      POSTGRES_USER: ${PLANE_DB_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_DB_PASSWORD:?PLANE_DB_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready --username "$${POSTGRES_USER}" --dbname "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - plane_db:/var/lib/postgresql/data
+    networks:
+      - plane
+
+  plane-redis:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-redis
+    image: ${PLANE_VALKEY_IMAGE_TAG:?PLANE_VALKEY_IMAGE_TAG is required}@${PLANE_VALKEY_IMAGE_DIGEST:?PLANE_VALKEY_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_REDIS_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_REDIS_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_REDIS_PIDS_LIMIT:-128}
+    logging: *plane-logging
+    command:
+      - valkey-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${PLANE_REDIS_PASSWORD:?PLANE_REDIS_PASSWORD is required}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - valkey-cli --no-auth-warning -a "$${PLANE_REDIS_PASSWORD}" ping | grep -q PONG
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    environment:
+      PLANE_REDIS_PASSWORD: ${PLANE_REDIS_PASSWORD:?PLANE_REDIS_PASSWORD is required}
+    volumes:
+      - plane_redis:/data
+    networks:
+      - plane
+
+  plane-mq:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-mq
+    image: ${PLANE_RABBITMQ_IMAGE_TAG:?PLANE_RABBITMQ_IMAGE_TAG is required}@${PLANE_RABBITMQ_IMAGE_DIGEST:?PLANE_RABBITMQ_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_RABBITMQ_MEMORY_LIMIT:-1g}
+    cpus: ${PLANE_RABBITMQ_CPU_LIMIT:-1.0}
+    pids_limit: ${PLANE_RABBITMQ_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    environment:
+      RABBITMQ_DEFAULT_USER: ${PLANE_RABBITMQ_USER:-plane}
+      RABBITMQ_DEFAULT_PASS: ${PLANE_RABBITMQ_PASSWORD:?PLANE_RABBITMQ_PASSWORD is required}
+      RABBITMQ_DEFAULT_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - ping
+      interval: 10s
+      timeout: 10s
+      retries: 18
+      start_period: 30s
+    volumes:
+      - plane_rabbitmq:/var/lib/rabbitmq
+    networks:
+      - plane
+
+  plane-minio:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-minio
+    image: ${PLANE_MINIO_IMAGE_TAG:?PLANE_MINIO_IMAGE_TAG is required}@${PLANE_MINIO_IMAGE_DIGEST:?PLANE_MINIO_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_MINIO_MEMORY_LIMIT:-1g}
+    cpus: ${PLANE_MINIO_CPU_LIMIT:-1.0}
+    pids_limit: ${PLANE_MINIO_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9090
+    environment:
+      MINIO_ROOT_USER: ${PLANE_MINIO_ROOT_USER:-plane}
+      MINIO_ROOT_PASSWORD: ${PLANE_MINIO_ROOT_PASSWORD:?PLANE_MINIO_ROOT_PASSWORD is required}
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - --fail
+        - http://127.0.0.1:9000/minio/health/live
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - plane_minio:/data
+    networks:
+      - plane
+
+  plane-migrator:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-migrator
+    image: ${PLANE_BACKEND_IMAGE_TAG:?PLANE_BACKEND_IMAGE_TAG is required}@${PLANE_BACKEND_IMAGE_DIGEST:?PLANE_BACKEND_IMAGE_DIGEST is required}
+    restart: "no"
+    mem_limit: ${PLANE_BACKEND_MEMORY_LIMIT:-2g}
+    cpus: ${PLANE_BACKEND_CPU_LIMIT:-1.5}
+    pids_limit: ${PLANE_BACKEND_PIDS_LIMIT:-512}
+    logging: *plane-logging
+    command: ./bin/docker-entrypoint-migrator.sh
+    environment: *plane-app-environment
+    volumes:
+      - plane_logs_migrator:/code/plane/logs
+    depends_on:
+      plane-db:
+        condition: service_healthy
+      plane-redis:
+        condition: service_healthy
+    networks:
+      plane:
+        aliases:
+          - migrator
+
+  plane-api:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-api
+    image: ${PLANE_BACKEND_IMAGE_TAG:?PLANE_BACKEND_IMAGE_TAG is required}@${PLANE_BACKEND_IMAGE_DIGEST:?PLANE_BACKEND_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_BACKEND_MEMORY_LIMIT:-2g}
+    cpus: ${PLANE_BACKEND_CPU_LIMIT:-1.5}
+    pids_limit: ${PLANE_BACKEND_PIDS_LIMIT:-512}
+    logging: *plane-logging
+    command: ./bin/docker-entrypoint-api.sh
+    environment: *plane-app-environment
+    volumes:
+      - plane_logs_api:/code/plane/logs
+    depends_on:
+      plane-migrator:
+        condition: service_completed_successfully
+      plane-mq:
+        condition: service_healthy
+      plane-minio:
+        condition: service_healthy
+    networks:
+      plane:
+        aliases:
+          - api
+
+  plane-worker:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-worker
+    image: ${PLANE_BACKEND_IMAGE_TAG:?PLANE_BACKEND_IMAGE_TAG is required}@${PLANE_BACKEND_IMAGE_DIGEST:?PLANE_BACKEND_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_BACKEND_MEMORY_LIMIT:-2g}
+    cpus: ${PLANE_BACKEND_CPU_LIMIT:-1.5}
+    pids_limit: ${PLANE_BACKEND_PIDS_LIMIT:-512}
+    logging: *plane-logging
+    command: ./bin/docker-entrypoint-worker.sh
+    environment: *plane-app-environment
+    volumes:
+      - plane_logs_worker:/code/plane/logs
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-mq:
+        condition: service_healthy
+    networks:
+      plane:
+        aliases:
+          - worker
+
+  plane-beat-worker:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-beat-worker
+    image: ${PLANE_BACKEND_IMAGE_TAG:?PLANE_BACKEND_IMAGE_TAG is required}@${PLANE_BACKEND_IMAGE_DIGEST:?PLANE_BACKEND_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_BACKEND_MEMORY_LIMIT:-2g}
+    cpus: ${PLANE_BACKEND_CPU_LIMIT:-1.5}
+    pids_limit: ${PLANE_BACKEND_PIDS_LIMIT:-512}
+    logging: *plane-logging
+    command: ./bin/docker-entrypoint-beat.sh
+    environment: *plane-app-environment
+    volumes:
+      - plane_logs_beat:/code/plane/logs
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-mq:
+        condition: service_healthy
+    networks:
+      plane:
+        aliases:
+          - beat-worker
+
+  plane-web:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-web
+    image: ${PLANE_FRONTEND_IMAGE_TAG:?PLANE_FRONTEND_IMAGE_TAG is required}@${PLANE_FRONTEND_IMAGE_DIGEST:?PLANE_FRONTEND_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_FRONTEND_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_FRONTEND_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_FRONTEND_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-worker:
+        condition: service_started
+    networks:
+      plane:
+        aliases:
+          - web
+
+  plane-space:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-space
+    image: ${PLANE_SPACE_IMAGE_TAG:?PLANE_SPACE_IMAGE_TAG is required}@${PLANE_SPACE_IMAGE_DIGEST:?PLANE_SPACE_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_FRONTEND_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_FRONTEND_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_FRONTEND_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    depends_on:
+      plane-api:
+        condition: service_started
+    networks:
+      plane:
+        aliases:
+          - space
+
+  plane-admin:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-admin
+    image: ${PLANE_ADMIN_IMAGE_TAG:?PLANE_ADMIN_IMAGE_TAG is required}@${PLANE_ADMIN_IMAGE_DIGEST:?PLANE_ADMIN_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_FRONTEND_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_FRONTEND_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_FRONTEND_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    depends_on:
+      plane-api:
+        condition: service_started
+    networks:
+      plane:
+        aliases:
+          - admin
+
+  plane-live:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-live
+    image: ${PLANE_LIVE_IMAGE_TAG:?PLANE_LIVE_IMAGE_TAG is required}@${PLANE_LIVE_IMAGE_DIGEST:?PLANE_LIVE_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_LIVE_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_LIVE_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_LIVE_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    environment:
+      API_BASE_URL: http://api:8000
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:?PLANE_LIVE_SERVER_SECRET_KEY is required}
+      REDIS_HOST: plane-redis
+      REDIS_PORT: "6379"
+      REDIS_URL: redis://:${PLANE_REDIS_PASSWORD:?PLANE_REDIS_PASSWORD is required}@plane-redis:6379/0
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-redis:
+        condition: service_healthy
+    networks:
+      plane:
+        aliases:
+          - live
+
+  plane-proxy:
+    container_name: ${COMPOSE_PROJECT_NAME:-infrastructure-pipeline}-plane-proxy
+    image: ${PLANE_PROXY_IMAGE_TAG:?PLANE_PROXY_IMAGE_TAG is required}@${PLANE_PROXY_IMAGE_DIGEST:?PLANE_PROXY_IMAGE_DIGEST is required}
+    restart: "on-failure:5"
+    mem_limit: ${PLANE_PROXY_MEMORY_LIMIT:-512m}
+    cpus: ${PLANE_PROXY_CPU_LIMIT:-0.5}
+    pids_limit: ${PLANE_PROXY_PIDS_LIMIT:-256}
+    logging: *plane-logging
+    environment:
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-127.0.0.1}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      LISTEN_HTTP_PORT: "80"
+      LISTEN_HTTPS_PORT: "443"
+      BUCKET_NAME: ${PLANE_MINIO_BUCKET:-uploads}
+      SITE_ADDRESS: ":80"
+      CERT_EMAIL: ""
+      CERT_ACME_CA: https://acme-v02.api.letsencrypt.org/directory
+      CERT_ACME_DNS: ""
+    ports:
+      - "${PLANE_HOST_ADDRESS:-127.0.0.1}:${PLANE_HTTP_PORT:-9010}:80"
+    volumes:
+      - plane_proxy_config:/config
+      - plane_proxy_data:/data
+    depends_on:
+      plane-web:
+        condition: service_started
+      plane-space:
+        condition: service_started
+      plane-admin:
+        condition: service_started
+      plane-live:
+        condition: service_started
+    networks:
+      - plane
+
+volumes:
+  plane_db:
+    name: ${PLANE_DB_VOLUME:-infrastructure-pipeline_plane_db}
+  plane_redis:
+    name: ${PLANE_REDIS_VOLUME:-infrastructure-pipeline_plane_redis}
+  plane_rabbitmq:
+    name: ${PLANE_RABBITMQ_VOLUME:-infrastructure-pipeline_plane_rabbitmq}
+  plane_minio:
+    name: ${PLANE_MINIO_VOLUME:-infrastructure-pipeline_plane_minio}
+  plane_logs_api:
+  plane_logs_worker:
+  plane_logs_beat:
+  plane_logs_migrator:
+  plane_proxy_config:
+  plane_proxy_data:
+
+networks:
+  plane:

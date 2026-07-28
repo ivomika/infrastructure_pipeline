@@ -5,6 +5,7 @@ set -euo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 toolchain_lock="${project_dir}/jenkins/toolchain.lock"
 docmost_toolchain_lock="${project_dir}/docmost/toolchain.lock"
+plane_toolchain_lock="${project_dir}/plane/toolchain.lock"
 direct_plugins="${project_dir}/jenkins/plugins/plugins.txt"
 plugin_lock="${project_dir}/jenkins/plugins/plugins.lock.txt"
 plugin_checksums="${project_dir}/jenkins/plugins/plugins.sha256"
@@ -28,14 +29,15 @@ fi
   exit 2
 }
 
-for file in "$toolchain_lock" "$docmost_toolchain_lock" "$direct_plugins" "$plugin_lock" "$plugin_checksums"; do
+for file in "$toolchain_lock" "$docmost_toolchain_lock" "$plane_toolchain_lock" "$direct_plugins" "$plugin_lock" "$plugin_checksums"; do
   [[ -s "$file" ]] || fail "missing or empty input: ${file#"$project_dir"/}"
 done
 
 invalid_lock_line="$(grep -EHv \
   '^(#.*|[[:space:]]*|[A-Z][A-Z0-9_]*=[^[:space:]]+)$' \
   "$toolchain_lock" \
-  "$docmost_toolchain_lock" ||
+  "$docmost_toolchain_lock" \
+  "$plane_toolchain_lock" ||
   true)"
 [[ -z "$invalid_lock_line" ]] || fail "toolchain.lock contains an invalid line: $invalid_lock_line"
 
@@ -44,6 +46,8 @@ set -a
 source "$toolchain_lock"
 # shellcheck disable=SC1090
 source "$docmost_toolchain_lock"
+# shellcheck disable=SC1090
+source "$plane_toolchain_lock"
 set +a
 
 required_values=(
@@ -104,6 +108,31 @@ required_values=(
   DOCMOST_REDIS_IMAGE_TAG
   DOCMOST_REDIS_IMAGE_DIGEST
   DOCMOST_REDIS_VERSION
+  PLANE_FRONTEND_IMAGE_TAG
+  PLANE_FRONTEND_IMAGE_DIGEST
+  PLANE_SPACE_IMAGE_TAG
+  PLANE_SPACE_IMAGE_DIGEST
+  PLANE_ADMIN_IMAGE_TAG
+  PLANE_ADMIN_IMAGE_DIGEST
+  PLANE_LIVE_IMAGE_TAG
+  PLANE_LIVE_IMAGE_DIGEST
+  PLANE_BACKEND_IMAGE_TAG
+  PLANE_BACKEND_IMAGE_DIGEST
+  PLANE_PROXY_IMAGE_TAG
+  PLANE_PROXY_IMAGE_DIGEST
+  PLANE_VERSION
+  PLANE_POSTGRES_IMAGE_TAG
+  PLANE_POSTGRES_IMAGE_DIGEST
+  PLANE_POSTGRES_VERSION
+  PLANE_VALKEY_IMAGE_TAG
+  PLANE_VALKEY_IMAGE_DIGEST
+  PLANE_VALKEY_VERSION
+  PLANE_RABBITMQ_IMAGE_TAG
+  PLANE_RABBITMQ_IMAGE_DIGEST
+  PLANE_RABBITMQ_VERSION
+  PLANE_MINIO_IMAGE_TAG
+  PLANE_MINIO_IMAGE_DIGEST
+  PLANE_MINIO_VERSION
 )
 
 for name in "${required_values[@]}"; do
@@ -116,7 +145,17 @@ for digest in \
   "$DOCKER_SOCKET_PROXY_DIGEST" \
   "$DOCMOST_IMAGE_DIGEST" \
   "$DOCMOST_POSTGRES_IMAGE_DIGEST" \
-  "$DOCMOST_REDIS_IMAGE_DIGEST"; do
+  "$DOCMOST_REDIS_IMAGE_DIGEST" \
+  "$PLANE_FRONTEND_IMAGE_DIGEST" \
+  "$PLANE_SPACE_IMAGE_DIGEST" \
+  "$PLANE_ADMIN_IMAGE_DIGEST" \
+  "$PLANE_LIVE_IMAGE_DIGEST" \
+  "$PLANE_BACKEND_IMAGE_DIGEST" \
+  "$PLANE_PROXY_IMAGE_DIGEST" \
+  "$PLANE_POSTGRES_IMAGE_DIGEST" \
+  "$PLANE_VALKEY_IMAGE_DIGEST" \
+  "$PLANE_RABBITMQ_IMAGE_DIGEST" \
+  "$PLANE_MINIO_IMAGE_DIGEST"; do
   [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || fail "invalid OCI digest: $digest"
 done
 
@@ -220,6 +259,16 @@ verify_image_digest "$DOCKER_SOCKET_PROXY_TAG" "$DOCKER_SOCKET_PROXY_DIGEST"
 verify_image_digest "$DOCMOST_IMAGE_TAG" "$DOCMOST_IMAGE_DIGEST"
 verify_image_digest "$DOCMOST_POSTGRES_IMAGE_TAG" "$DOCMOST_POSTGRES_IMAGE_DIGEST"
 verify_image_digest "$DOCMOST_REDIS_IMAGE_TAG" "$DOCMOST_REDIS_IMAGE_DIGEST"
+verify_image_digest "$PLANE_FRONTEND_IMAGE_TAG" "$PLANE_FRONTEND_IMAGE_DIGEST"
+verify_image_digest "$PLANE_SPACE_IMAGE_TAG" "$PLANE_SPACE_IMAGE_DIGEST"
+verify_image_digest "$PLANE_ADMIN_IMAGE_TAG" "$PLANE_ADMIN_IMAGE_DIGEST"
+verify_image_digest "$PLANE_LIVE_IMAGE_TAG" "$PLANE_LIVE_IMAGE_DIGEST"
+verify_image_digest "$PLANE_BACKEND_IMAGE_TAG" "$PLANE_BACKEND_IMAGE_DIGEST"
+verify_image_digest "$PLANE_PROXY_IMAGE_TAG" "$PLANE_PROXY_IMAGE_DIGEST"
+verify_image_digest "$PLANE_POSTGRES_IMAGE_TAG" "$PLANE_POSTGRES_IMAGE_DIGEST"
+verify_image_digest "$PLANE_VALKEY_IMAGE_TAG" "$PLANE_VALKEY_IMAGE_DIGEST"
+verify_image_digest "$PLANE_RABBITMQ_IMAGE_TAG" "$PLANE_RABBITMQ_IMAGE_DIGEST"
+verify_image_digest "$PLANE_MINIO_IMAGE_TAG" "$PLANE_MINIO_IMAGE_DIGEST"
 
 for url in \
   "$NODE_LINUX_X64_URL" \

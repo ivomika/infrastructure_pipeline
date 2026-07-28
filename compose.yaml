@@ -7,3 +7,5 @@ include:
     env_file: ./jenkins/toolchain.lock
   - path: ./docmost/compose.yaml
     env_file: ./docmost/toolchain.lock
+  - path: ./plane/compose.yaml
+    env_file: ./plane/toolchain.lock

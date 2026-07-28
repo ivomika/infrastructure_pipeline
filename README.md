@@ -1,8 +1,8 @@
 # Development infrastructure
 
 This repository builds a Jenkins controller and ephemeral Docker agents for
-Flutter, Java, and Node.js pipelines. It also runs a self-hosted Docmost
-instance with private PostgreSQL and Redis services.
+Flutter, Java, and Node.js pipelines. It also runs self-hosted Docmost and
+Plane Community Edition instances with their private data services.
 
 ## Bootstrap
 
@@ -15,14 +15,16 @@ make bootstrap
 
 The target validates Docker and Compose, creates `.env` without overwriting an
 existing file, checks runtime configuration and locks, builds all images,
-starts the stack, waits for Jenkins and Docmost, and provisions the first
-Docmost workspace and owner. If bootstrap creates `.env` from the template,
-set the real shared-library repository URL and run the same command again.
-Repeated successful runs are idempotent.
+starts the stack, waits for Jenkins, Docmost, and Plane, and provisions the
+first Docmost workspace and owner. If bootstrap creates `.env` from the
+template, set the real shared-library repository URL and run the same command
+again. Repeated successful runs are idempotent.
 
-Jenkins is published at `http://127.0.0.1:8080/` and Docmost at
-`http://127.0.0.1:3000/`. See the
-[Docmost module documentation](docmost/README.md).
+Jenkins is published at `http://127.0.0.1:8080/`, Docmost at
+`http://127.0.0.1:3000/`, and Plane at `http://127.0.0.1:9010/`. Complete
+Plane's **Secure your instance** screen on the first visit. See the
+[Docmost module documentation](docmost/README.md) and
+[Plane module documentation](plane/README.md).
 
 ## Reproducible build contract
 
@@ -33,9 +35,11 @@ engine.
 A build is defined entirely by the committed contents of:
 
 - `compose.yaml`, `jenkins/compose.yaml`,
-  `jenkins/agents/compose.agents.yaml`, and `docmost/compose.yaml`;
+  `jenkins/agents/compose.agents.yaml`, `docmost/compose.yaml`, and
+  `plane/compose.yaml`;
 - every Dockerfile and `.dockerignore` in `jenkins/`;
-- `jenkins/toolchain.lock` and `docmost/toolchain.lock`;
+- `jenkins/toolchain.lock`, `docmost/toolchain.lock`, and
+  `plane/toolchain.lock`;
 - `jenkins/plugins/plugins.txt`;
 - `jenkins/jcasc/jenkins.yaml`;
 - `jenkins/docker-socket-proxy/haproxy.cfg.template`;
