@@ -10,7 +10,7 @@ services:
       - --host=tcp://0.0.0.0:2375
       - --tls=false
     healthcheck:
-      test: ["CMD", "docker", "info", "--host", "tcp://127.0.0.1:2375"]
+      test: ["CMD", "docker", "info"]
       interval: 5s
       timeout: 3s
       retries: 20

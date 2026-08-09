@@ -9,6 +9,6 @@ if [ ! -f .env ]; then
 fi
 
 docker compose --env-file .env -f compose.yaml build
-docker compose --env-file .env -f compose.yaml up -d jenkins-docker
+docker compose --env-file .env -f compose.yaml up -d --wait jenkins-docker
 ./scripts/build-jenkins-agents.sh
 docker compose --env-file .env -f compose.yaml up -d

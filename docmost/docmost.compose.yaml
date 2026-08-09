@@ -7,7 +7,7 @@ services:
       - docmost-redis
     environment:
       APP_URL: ${DOCMOST_APP_URL:-http://localhost:8082}
-      APP_SECRET: ${DOCMOST_APP_SECRET:-change-me-docmost-app-secret}
+      APP_SECRET: ${DOCMOST_APP_SECRET:-change-me-docmost-app-secret-before-use}
       DATABASE_URL: postgresql://docmost:${DOCMOST_DB_PASSWORD:-change-me-docmost-db}@docmost-db:5432/docmost
       REDIS_URL: redis://docmost-redis:6379
     ports:

@@ -2,6 +2,12 @@ services:
   nginx:
     image: nginx:1.28-alpine
     restart: unless-stopped
+    depends_on:
+      - jenkins-controller
+      - plane-proxy
+      - docmost
+      - nexus
+      - grafana
     environment:
       JENKINS_HOST: ${JENKINS_HOST:-jenkins.localhost}
       PLANE_HOST: ${PLANE_HOST:-plane.localhost}
