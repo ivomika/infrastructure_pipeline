@@ -2,6 +2,52 @@ jenkins:
   systemMessage: "Jenkins is managed by Configuration as Code"
   numExecutors: 0
   mode: NORMAL
+  clouds:
+    - docker:
+        name: "isolated-docker"
+        containerCap: 4
+        dockerApi:
+          dockerHost:
+            uri: "${JENKINS_DOCKER_HOST}"
+          connectTimeout: 60
+          readTimeout: 60
+        templates:
+          - &agent-template
+            name: "slave"
+            labelString: "slave generic"
+            remoteFs: "/home/jenkins/agent"
+            mode: EXCLUSIVE
+            instanceCapStr: "2"
+            pullStrategy: PULL_NEVER
+            removeVolumes: true
+            retentionStrategy:
+              idleMinutes: 0
+            connector:
+              attach:
+                user: "jenkins"
+            dockerTemplateBase: &agent-container
+              image: "${JENKINS_AGENT_SLAVE_IMAGE}"
+              environmentsString: |
+                DOCKER_HOST=tcp://docker-host:2375
+              extraHostsString: "docker-host:host-gateway"
+          - <<: *agent-template
+            name: "java"
+            labelString: "java maven"
+            dockerTemplateBase:
+              <<: *agent-container
+              image: "${JENKINS_AGENT_JAVA_IMAGE}"
+          - <<: *agent-template
+            name: "node"
+            labelString: "node nodejs"
+            dockerTemplateBase:
+              <<: *agent-container
+              image: "${JENKINS_AGENT_NODE_IMAGE}"
+          - <<: *agent-template
+            name: "flutter"
+            labelString: "flutter web"
+            dockerTemplateBase:
+              <<: *agent-container
+              image: "${JENKINS_AGENT_FLUTTER_IMAGE}"
   securityRealm:
     local:
       allowsSignup: false

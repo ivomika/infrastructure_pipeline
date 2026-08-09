@@ -1,0 +1,10 @@
+FROM devops-infra/jenkins-agent-slave:local
+
+USER root
+
+RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /opt/flutter \
+    && chown -R jenkins:jenkins /opt/flutter
+
+ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
+
+USER jenkins

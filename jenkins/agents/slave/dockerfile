@@ -1,0 +1,17 @@
+FROM jenkins/agent:jdk21
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        docker.io \
+        git \
+        jq \
+        make \
+        unzip \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jenkins

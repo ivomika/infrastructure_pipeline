@@ -1,0 +1,24 @@
+services:
+  slave:
+    image: devops-infra/jenkins-agent-slave:local
+    build:
+      context: ./slave
+      dockerfile: dockerfile
+
+  java:
+    image: devops-infra/jenkins-agent-java:local
+    build:
+      context: ./java
+      dockerfile: dockerfile
+
+  node:
+    image: devops-infra/jenkins-agent-node:local
+    build:
+      context: ./node
+      dockerfile: dockerfile
+
+  flutter:
+    image: devops-infra/jenkins-agent-flutter:local
+    build:
+      context: ./flutter
+      dockerfile: dockerfile

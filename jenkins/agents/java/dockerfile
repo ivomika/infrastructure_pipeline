@@ -1,0 +1,9 @@
+FROM devops-infra/jenkins-agent-slave:local
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends maven \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jenkins
