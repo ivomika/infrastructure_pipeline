@@ -5,6 +5,7 @@ include:
   - path: ./plane/plane.compose.yaml
   - path: ./docmost/docmost.compose.yaml
   - path: ./nexus/nexus.compose.yaml
+  - path: ./grafana/grafana.compose.yml
 
 networks:
   backend:
