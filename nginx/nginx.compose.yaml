@@ -1,0 +1,17 @@
+services:
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    environment:
+      JENKINS_HOST: ${JENKINS_HOST:-jenkins.localhost}
+      PLANE_HOST: ${PLANE_HOST:-plane.localhost}
+      DOCMOST_HOST: ${DOCMOST_HOST:-docs.localhost}
+      NEXUS_HOST: ${NEXUS_HOST:-nexus.localhost}
+      NEXUS_DOCKER_HOST: ${NEXUS_DOCKER_HOST:-registry.localhost}
+      GRAFANA_HOST: ${GRAFANA_HOST:-grafana.localhost}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./templates:/etc/nginx/templates:ro
+    networks:
+      - proxy

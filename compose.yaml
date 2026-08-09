@@ -6,6 +6,7 @@ include:
   - path: ./docmost/docmost.compose.yaml
   - path: ./nexus/nexus.compose.yaml
   - path: ./grafana/grafana.compose.yml
+  - path: ./nginx/nginx.compose.yaml
 
 networks:
   backend:
