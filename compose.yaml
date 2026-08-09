@@ -1,0 +1,9 @@
+name: ${COMPOSE_PROJECT_NAME:-devops-infra}
+
+services: {}
+
+networks:
+  backend:
+    name: ${COMPOSE_PROJECT_NAME:-devops-infra}-backend
+  proxy:
+    name: ${COMPOSE_PROJECT_NAME:-devops-infra}-proxy
