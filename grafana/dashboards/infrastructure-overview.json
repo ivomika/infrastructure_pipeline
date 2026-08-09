@@ -23,8 +23,36 @@
     },
     {
       "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"color": "red", "text": "DOWN"}, "1": {"color": "green", "text": "UP"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 16, "x": 0, "y": 6},
+      "id": 5,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "expr": "probe_success{job=\"blackbox-http\"}", "legendFormat": "{{service}}", "range": true, "refId": "A"}],
+      "title": "HTTP services",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 3}]}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 6},
+      "id": 6,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"editorMode": "code", "expr": "probe_duration_seconds{job=\"blackbox-http\"}", "legendFormat": "{{service}}", "range": true, "refId": "A"}],
+      "title": "HTTP response time",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {"defaults": {"max": 100, "min": 0, "unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]}}, "overrides": []},
-      "gridPos": {"h": 7, "w": 8, "x": 0, "y": 6},
+      "gridPos": {"h": 7, "w": 8, "x": 0, "y": 12},
       "id": 2,
       "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
       "targets": [{"editorMode": "code", "expr": "100 - avg(rate(node_cpu_seconds_total{job=\"host\",mode=\"idle\"}[5m])) * 100", "legendFormat": "CPU", "range": true, "refId": "A"}],
@@ -34,7 +62,7 @@
     {
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {"defaults": {"max": 100, "min": 0, "unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 75}, {"color": "red", "value": 90}]}}, "overrides": []},
-      "gridPos": {"h": 7, "w": 8, "x": 8, "y": 6},
+      "gridPos": {"h": 7, "w": 8, "x": 8, "y": 12},
       "id": 3,
       "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
       "targets": [{"editorMode": "code", "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"host\"} / node_memory_MemTotal_bytes{job=\"host\"})", "legendFormat": "Memory", "range": true, "refId": "A"}],
@@ -44,7 +72,7 @@
     {
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
-      "gridPos": {"h": 7, "w": 8, "x": 16, "y": 6},
+      "gridPos": {"h": 7, "w": 8, "x": 16, "y": 12},
       "id": 4,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "expr": "count(container_last_seen{job=\"containers\",id=~\"/docker/[0-9a-f]{64}\"})", "legendFormat": "Containers", "range": true, "refId": "A"}],

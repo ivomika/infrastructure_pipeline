@@ -18,3 +18,30 @@ scrape_configs:
     metrics_path: /prometheus
     static_configs:
       - targets: ["jenkins-controller:8080"]
+
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://jenkins-controller:8080/login"]
+        labels:
+          service: Jenkins
+      - targets: ["http://plane-proxy:80/"]
+        labels:
+          service: Plane
+      - targets: ["http://docmost:3000/"]
+        labels:
+          service: Docmost
+      - targets: ["http://nexus:8081/"]
+        labels:
+          service: Nexus
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: target
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [service]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
