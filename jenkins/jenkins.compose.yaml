@@ -1,0 +1,56 @@
+services:
+  jenkins-docker:
+    image: docker:28-dind
+    privileged: true
+    restart: unless-stopped
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_HOST: tcp://127.0.0.1:2375
+    command:
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    healthcheck:
+      test: ["CMD", "docker", "info", "--host", "tcp://127.0.0.1:2375"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - jenkins-docker-data:/var/lib/docker
+      - ../:/workspace:ro
+    networks:
+      - jenkins-docker
+      - jenkins-egress
+
+  jenkins-controller:
+    image: ${JENKINS_CONTROLLER_IMAGE:-devops-infra/jenkins-controller:local}
+    build:
+      context: ./controller
+      dockerfile: dockerfile
+    restart: unless-stopped
+    depends_on:
+      jenkins-docker:
+        condition: service_healthy
+    environment:
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-change-me}
+      JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
+      JENKINS_DOCKER_HOST: tcp://jenkins-docker:2375
+    ports:
+      - "127.0.0.1:${JENKINS_HTTP_PORT:-8080}:8080"
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      - ./controller/casc:/var/jenkins_home/casc:ro
+    networks:
+      - backend
+      - proxy
+      - jenkins-docker
+
+volumes:
+  jenkins-home:
+  jenkins-docker-data:
+
+networks:
+  jenkins-docker:
+    internal: true
+  jenkins-egress:

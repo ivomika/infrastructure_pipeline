@@ -1,0 +1,9 @@
+configuration-as-code
+credentials-binding
+docker-plugin
+docker-workflow
+git
+matrix-auth
+pipeline-stage-view
+workflow-aggregator
+ws-cleanup
