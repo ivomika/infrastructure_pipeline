@@ -4,6 +4,7 @@ include:
   - path: ./jenkins/jenkins.compose.yaml
   - path: ./plane/plane.compose.yaml
   - path: ./docmost/docmost.compose.yaml
+  - path: ./nexus/nexus.compose.yaml
 
 networks:
   backend:
