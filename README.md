@@ -46,5 +46,13 @@ Jenkins запускает эфемерные агенты `slave`, `java`, `nod
 - Node.js `22.23.2`, npm `10.9.8`;
 - Flutter `3.44.9`, Dart `3.12.2`.
 
+## Мониторинг проектов
+
+Grafana автоматически формирует дашборд `Project Overview` из Blackbox-метрик.
+Чтобы подключить проект, добавьте backend и frontend endpoints в
+`grafana/prometheus/targets/projects.yml`. Используйте одинаковый `project` и
+`environment`, а в `component` укажите соответственно `backend` и `frontend`.
+Prometheus применяет изменения target-файла без перезапуска.
+
 Резервное копирование в первую версию не входит. Данные приложений сохраняются
 в Docker volumes при обычном `make down`.

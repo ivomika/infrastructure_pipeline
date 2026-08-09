@@ -1,0 +1,25 @@
+# Add two target groups for each project: backend and frontend.
+- targets: ["http://api:8000/api/instances/"]
+  labels:
+    project: plane
+    component: backend
+    environment: local
+
+- targets: ["http://plane-proxy:80/"]
+  labels:
+    project: plane
+    component: frontend
+    environment: local
+
+# Project template:
+# - targets: ["http://project-api:8080/health"]
+#   labels:
+#     project: project-name
+#     component: backend
+#     environment: local
+#
+# - targets: ["http://project-web:80/"]
+#   labels:
+#     project: project-name
+#     component: frontend
+#     environment: local

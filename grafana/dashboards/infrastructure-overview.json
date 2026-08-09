@@ -3,7 +3,8 @@
   "editable": false,
   "graphTooltip": 1,
   "links": [
-    {"asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Prometheus targets", "type": "link", "url": "/d/prometheus-targets/prometheus-targets"}
+    {"asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Prometheus targets", "type": "link", "url": "/d/prometheus-targets/prometheus-targets"},
+    {"asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Projects", "type": "link", "url": "/d/project-overview/project-overview"}
   ],
   "panels": [
     {
