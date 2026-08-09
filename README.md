@@ -28,11 +28,17 @@ Jenkins controller и агентов, поэтому занимает больш
 ```sh
 make up                # собрать и запустить инфраструктуру
 make down              # остановить контейнеры, сохранив volumes
+make restart           # перезапустить все запущенные сервисы
+make restart SERVICE=grafana  # перезапустить отдельный Compose-сервис
 make logs              # открыть общие логи
 make config            # вывести итоговую Compose-конфигурацию
 make clean-cache       # очистить кэш отдельного Docker daemon Jenkins
 make clean-host-cache  # очистить dangling-образы и build cache хоста
 ```
+
+В `SERVICE` указывается имя из Compose, например `jenkins-controller`,
+`plane-proxy`, `docmost`, `nexus`, `grafana` или `prometheus`. Команда restart
+не пересобирает образ и не пересоздаёт контейнер.
 
 Jenkins запускает эфемерные агенты `slave`, `java`, `node` и `flutter` в
 отдельном Docker daemon. Docker socket хоста в Jenkins не передаётся. Android
