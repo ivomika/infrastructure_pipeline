@@ -1,8 +1,11 @@
-FROM devops-infra/jenkins-agent-slave:local
+FROM devops-infra/jenkins-agent-slave:1.0.0
+
+ARG FLUTTER_VERSION=3.44.9
+ARG DART_VERSION=3.12.2
 
 USER root
 
-RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /opt/flutter \
+RUN git clone --depth 1 --branch "${FLUTTER_VERSION}" https://github.com/flutter/flutter.git /opt/flutter \
     && chown -R jenkins:jenkins /opt/flutter
 
 ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
@@ -10,4 +13,6 @@ ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
 USER jenkins
 
 RUN flutter config --no-analytics \
-    && flutter precache --web
+    && flutter precache --web \
+    && flutter --version | grep -F "Flutter ${FLUTTER_VERSION}" \
+    && dart --version 2>&1 | grep -F "Dart SDK version: ${DART_VERSION}"

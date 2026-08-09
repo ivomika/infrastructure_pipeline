@@ -1,6 +1,6 @@
 services:
   nexus:
-    image: sonatype/nexus3:latest
+    image: sonatype/nexus3:3.95.0
     restart: unless-stopped
     ports:
       - "127.0.0.1:${NEXUS_HTTP_PORT:-8083}:8081"

@@ -1,9 +1,14 @@
-FROM devops-infra/jenkins-agent-slave:local
+ARG MAVEN_VERSION=3.9.11
+
+FROM maven:${MAVEN_VERSION}-eclipse-temurin-21 AS maven
+FROM devops-infra/jenkins-agent-slave:1.0.0
 
 USER root
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends maven \
-    && rm -rf /var/lib/apt/lists/*
+COPY --from=maven /usr/share/maven /usr/share/maven
+
+RUN ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
+
+ENV MAVEN_HOME=/usr/share/maven
 
 USER jenkins

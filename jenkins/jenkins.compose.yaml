@@ -1,6 +1,6 @@
 services:
   jenkins-docker:
-    image: docker:28-dind
+    image: docker:28.5.2-dind
     privileged: true
     restart: unless-stopped
     environment:
@@ -22,7 +22,7 @@ services:
       - jenkins-egress
 
   jenkins-controller:
-    image: ${JENKINS_CONTROLLER_IMAGE:-devops-infra/jenkins-controller:local}
+    image: ${JENKINS_CONTROLLER_IMAGE:-devops-infra/jenkins-controller:1.0.0}
     build:
       context: ./controller
       dockerfile: dockerfile
@@ -36,10 +36,10 @@ services:
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-change-me}
       JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
       JENKINS_DOCKER_HOST: tcp://jenkins-docker:2375
-      JENKINS_AGENT_SLAVE_IMAGE: devops-infra/jenkins-agent-slave:local
-      JENKINS_AGENT_JAVA_IMAGE: devops-infra/jenkins-agent-java:local
-      JENKINS_AGENT_NODE_IMAGE: devops-infra/jenkins-agent-node:local
-      JENKINS_AGENT_FLUTTER_IMAGE: devops-infra/jenkins-agent-flutter:local
+      JENKINS_AGENT_SLAVE_IMAGE: devops-infra/jenkins-agent-slave:1.0.0
+      JENKINS_AGENT_JAVA_IMAGE: devops-infra/jenkins-agent-java:1.0.0
+      JENKINS_AGENT_NODE_IMAGE: devops-infra/jenkins-agent-node:1.0.0
+      JENKINS_AGENT_FLUTTER_IMAGE: devops-infra/jenkins-agent-flutter:1.0.0
     ports:
       - "127.0.0.1:${JENKINS_HTTP_PORT:-8080}:8080"
     volumes:

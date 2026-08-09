@@ -38,5 +38,13 @@ Jenkins запускает эфемерные агенты `slave`, `java`, `nod
 отдельном Docker daemon. Docker socket хоста в Jenkins не передаётся. Android
 агент в первую версию не входит; APK хранятся в raw-репозитории Nexus.
 
+Версии toolchain агентов зафиксированы в Dockerfile:
+
+- Jenkins agent `3384.v60d89463d9e0-1`, JDK 21;
+- Docker CLI `28.5.2`;
+- Maven `3.9.11`;
+- Node.js `22.23.2`, npm `10.9.8`;
+- Flutter `3.44.9`, Dart `3.12.2`.
+
 Резервное копирование в первую версию не входит. Данные приложений сохраняются
 в Docker volumes при обычном `make down`.

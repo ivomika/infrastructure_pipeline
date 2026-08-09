@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:1.28-alpine
+    image: nginx:1.28.3-alpine
     restart: unless-stopped
     depends_on:
       - jenkins-controller
