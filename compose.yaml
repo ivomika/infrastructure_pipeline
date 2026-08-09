@@ -3,6 +3,7 @@ name: ${COMPOSE_PROJECT_NAME:-devops-infra}
 include:
   - path: ./jenkins/jenkins.compose.yaml
   - path: ./plane/plane.compose.yaml
+  - path: ./docmost/docmost.compose.yaml
 
 networks:
   backend:
