@@ -8,3 +8,6 @@ RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /
 ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
 USER jenkins
+
+RUN flutter config --no-analytics \
+    && flutter precache --web
