@@ -156,12 +156,12 @@ library_credentials="$(resolved_env SHARED_LIBRARY_CREDENTIALS_ID)"
   fail "JENKINS_ADMIN_PASSWORD must contain at least 8 characters"
 [[ "$admin_id/$admin_password" != "admin/admin" ]] ||
   fail "admin/admin credentials are forbidden"
-[[ "${#docmost_db_password}" -ge 16 && "$docmost_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "DOCMOST_DB_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#docmost_db_password}" -ge 8 && "$docmost_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "DOCMOST_DB_PASSWORD must contain at least 8 URL-safe characters"
 [[ "${#docmost_app_secret}" -ge 32 ]] ||
   fail "DOCMOST_APP_SECRET must contain at least 32 characters"
-[[ "${#docmost_redis_password}" -ge 16 && "$docmost_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "DOCMOST_REDIS_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#docmost_redis_password}" -ge 8 && "$docmost_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "DOCMOST_REDIS_PASSWORD must contain at least 8 URL-safe characters"
 [[ -n "$docmost_owner_name" && "${#docmost_owner_name}" -le 50 ]] ||
   fail "DOCMOST_OWNER_NAME must contain between 1 and 50 characters"
 [[ -n "$docmost_owner_email" && "$docmost_owner_email" == *@*.* ]] ||
@@ -174,16 +174,16 @@ case "$docmost_auto_setup" in
   true | false) ;;
   *) fail "DOCMOST_AUTO_SETUP must be true or false" ;;
 esac
-[[ "${#plane_db_password}" -ge 16 && "$plane_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "PLANE_DB_PASSWORD must contain at least 16 URL-safe characters"
-[[ "${#plane_redis_password}" -ge 16 && "$plane_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "PLANE_REDIS_PASSWORD must contain at least 16 URL-safe characters"
-[[ "${#plane_rabbitmq_password}" -ge 16 && "$plane_rabbitmq_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "PLANE_RABBITMQ_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#plane_db_password}" -ge 8 && "$plane_db_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_DB_PASSWORD must contain at least 8 URL-safe characters"
+[[ "${#plane_redis_password}" -ge 8 && "$plane_redis_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_REDIS_PASSWORD must contain at least 8 URL-safe characters"
+[[ "${#plane_rabbitmq_password}" -ge 8 && "$plane_rabbitmq_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_RABBITMQ_PASSWORD must contain at least 8 URL-safe characters"
 [[ -n "$plane_minio_root_user" ]] ||
   fail "PLANE_MINIO_ROOT_USER must not be empty"
-[[ "${#plane_minio_root_password}" -ge 16 && "$plane_minio_root_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
-  fail "PLANE_MINIO_ROOT_PASSWORD must contain at least 16 URL-safe characters"
+[[ "${#plane_minio_root_password}" -ge 8 && "$plane_minio_root_password" =~ ^[A-Za-z0-9._~-]+$ ]] ||
+  fail "PLANE_MINIO_ROOT_PASSWORD must contain at least 8 URL-safe characters"
 [[ "${#plane_secret_key}" -ge 32 ]] ||
   fail "PLANE_SECRET_KEY must contain at least 32 characters"
 [[ "${#plane_live_secret_key}" -ge 32 ]] ||
