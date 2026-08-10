@@ -4,15 +4,38 @@
 артефактов и мониторинга. Корневой `compose.yaml` подключает Compose-файлы
 приложений через `include`.
 
-## Запуск
+## Production-запуск
+
+```sh
+cp .env.example .env
+# Укажите production-домены, email Certbot и секреты в .env.
+make cert
+```
+
+`make cert` запускает временную HTTP-конфигурацию Nginx для ACME challenge,
+получает один SAN-сертификат для всех сервисов и переключает Nginx на HTTPS.
+Контейнер `certbot-renew` автоматически проверяет необходимость продления
+сертификата каждые 12 часов.
+
+Последующие запуски выполняются обычной командой:
 
 ```sh
 make up
 ```
 
-При первом запуске `.env` создаётся из `.env.example`. Перед использованием
-замените значения `change-me-*`. Первый запуск скачивает образы, собирает
-Jenkins controller и агентов, поэтому занимает больше времени следующих.
+Перед выпуском сертификата DNS-записи всех указанных доменов должны вести на
+сервер, а порты 80 и 443 должны быть доступны извне. Первый запуск скачивает
+образы, собирает Jenkins controller и агентов, поэтому занимает больше времени
+следующих.
+
+## Локальный запуск
+
+```sh
+make local-up
+```
+
+При первом локальном запуске `.env.local` создаётся из `.env.local.example`.
+Локальные сервисы работают только по HTTP:
 
 Сервисы доступны через Nginx:
 
@@ -26,14 +49,23 @@ Jenkins controller и агентов, поэтому занимает больш
 ## Команды
 
 ```sh
-make up                # собрать и запустить инфраструктуру
-make down              # остановить контейнеры, сохранив volumes
-make restart           # перезапустить все запущенные сервисы
-make restart SERVICE=grafana  # перезапустить отдельный Compose-сервис
-make logs              # открыть общие логи
-make config            # вывести итоговую Compose-конфигурацию
-make clean-cache       # очистить кэш отдельного Docker daemon Jenkins
-make clean-host-cache  # очистить dangling-образы и build cache хоста
+make up                         # production-запуск
+make down                       # остановить production
+make restart SERVICE=grafana    # перезапустить production-сервис
+make logs                       # production-логи
+make config                     # итоговая production-конфигурация
+make cert                       # первичный выпуск/расширение сертификата
+make cert-renew                 # ручной запуск renewal
+make clean-cache                # очистить production Jenkins Docker cache
+
+make local-up                   # локальный HTTP-запуск
+make local-down                 # остановить локальную инфраструктуру
+make local-restart SERVICE=grafana
+make local-logs
+make local-config
+make local-clean-cache
+
+make clean-host-cache           # очистить Docker cache хоста
 ```
 
 В `SERVICE` указывается имя из Compose, например `jenkins-controller`,
@@ -60,5 +92,6 @@ Grafana автоматически формирует дашборд `Project Ov
 `environment`, а в `component` укажите соответственно `backend` и `frontend`.
 Prometheus применяет изменения target-файла без перезапуска.
 
-Резервное копирование в первую версию не входит. Данные приложений сохраняются
-в Docker volumes при обычном `make down`.
+Резервное копирование в первую версию не входит. Production и local используют
+разные Compose project names и отдельные Docker volumes. Данные production-
+приложений сохраняются в volumes при обычном `make down`.

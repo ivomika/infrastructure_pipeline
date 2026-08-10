@@ -1,0 +1,74 @@
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen 80 default_server;
+    server_name _;
+    return 444;
+}
+
+server {
+    listen 80;
+    server_name ${JENKINS_HOST};
+
+    location / {
+        proxy_pass http://jenkins-controller:8080;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${PLANE_HOST};
+    client_max_body_size 10m;
+
+    location / {
+        proxy_pass http://plane-proxy:80;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${DOCMOST_HOST};
+    client_max_body_size 50m;
+
+    location / {
+        proxy_pass http://docmost:3000;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${NEXUS_HOST};
+    client_max_body_size 0;
+
+    location / {
+        proxy_pass http://nexus:8081;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${NEXUS_DOCKER_HOST};
+    client_max_body_size 0;
+
+    location / {
+        proxy_pass http://nexus:5000;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${GRAFANA_HOST};
+
+    location / {
+        proxy_pass http://grafana:3000;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+}
