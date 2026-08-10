@@ -27,7 +27,7 @@ cert:
 	$(PROD_COMPOSE) up -d --force-recreate nginx certbot-renew
 
 cert-renew:
-	$(PROD_COMPOSE) run --rm --entrypoint certbot certbot renew --webroot --webroot-path /var/www/certbot
+	$(PROD_COMPOSE) run --rm --entrypoint /bin/sh certbot /opt/certbot/renew-once.sh
 	$(PROD_COMPOSE) exec nginx nginx -s reload
 
 local-up:

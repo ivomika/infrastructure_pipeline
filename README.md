@@ -92,6 +92,11 @@ Grafana автоматически формирует дашборд `Project Ov
 `environment`, а в `component` укажите соответственно `backend` и `frontend`.
 Prometheus применяет изменения target-файла без перезапуска.
 
+Дашборд `Infrastructure Overview` показывает результат последнего запуска
+Certbot, время с последней успешной проверки и оставшийся срок действия общего
+SAN-сертификата. Метрики формирует `certbot-renew` и передаёт в Prometheus через
+textfile collector Node Exporter.
+
 Резервное копирование в первую версию не входит. Production и local используют
 разные Compose project names и отдельные Docker volumes. Данные production-
 приложений сохраняются в volumes при обычном `make down`.

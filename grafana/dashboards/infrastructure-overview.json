@@ -64,6 +64,44 @@
       "targets": [{"editorMode": "code", "expr": "count(container_last_seen{job=\"containers\",id=~\"/docker/[0-9a-f]{64}\"})", "legendFormat": "Containers", "range": true, "refId": "A"}],
       "title": "Observed Docker containers",
       "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"color": "red", "text": "FAILED"}, "1": {"color": "green", "text": "OK"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 13},
+      "id": 7,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "expr": "certbot_renew_last_run_success{job=\"host\"}", "legendFormat": "Certbot", "range": true, "refId": "A"}],
+      "title": "Certbot last run",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "d", "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 14}, {"color": "green", "value": 30}]}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 13},
+      "id": 8,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"editorMode": "code", "expr": "(certbot_certificate_expiry_timestamp_seconds{job=\"host\"} - time()) / 86400", "legendFormat": "{{certificate}}", "range": true, "refId": "A"}],
+      "title": "Certificate validity remaining",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "h", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 24}, {"color": "red", "value": 48}]}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 13},
+      "id": 9,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"editorMode": "code", "expr": "(time() - certbot_renew_last_success_timestamp_seconds{job=\"host\"}) / 3600", "legendFormat": "Hours", "range": true, "refId": "A"}],
+      "title": "Time since successful Certbot check",
+      "type": "gauge"
     }
   ],
   "refresh": "30s",
@@ -73,5 +111,5 @@
   "timezone": "browser",
   "title": "Infrastructure Overview",
   "uid": "infrastructure-overview",
-  "version": 1
+  "version": 2
 }

@@ -56,6 +56,7 @@ services:
     volumes: &certbot-volumes
       - certbot-certs:/etc/letsencrypt
       - certbot-webroot:/var/www/certbot
+      - certbot-metrics:/var/lib/node_exporter/textfile_collector
       - ./certbot:/opt/certbot:ro
     networks:
       - proxy
@@ -78,3 +79,4 @@ services:
 volumes:
   certbot-certs:
   certbot-webroot:
+  certbot-metrics:

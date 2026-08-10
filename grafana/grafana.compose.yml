@@ -58,8 +58,10 @@ services:
     restart: unless-stopped
     command:
       - --path.rootfs=/host
+      - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
     volumes:
       - /:/host:ro
+      - certbot-metrics:/var/lib/node_exporter/textfile_collector:ro
     networks:
       - backend
 

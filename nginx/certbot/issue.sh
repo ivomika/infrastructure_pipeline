@@ -21,4 +21,12 @@ do
   set -- "$@" --domain "$domain"
 done
 
-exec certbot "$@"
+. /opt/certbot/metrics.sh
+
+if certbot "$@"; then
+  write_certbot_metrics 1 || true
+else
+  status=$?
+  write_certbot_metrics 0 || true
+  exit "$status"
+fi
