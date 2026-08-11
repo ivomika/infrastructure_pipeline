@@ -22,18 +22,9 @@ services:
     volumes:
       - ./templates/${NGINX_TEMPLATE_FILE:-default.conf.template}:/etc/nginx/templates/default.conf.template:ro
       - ./snippets:/etc/nginx/snippets:ro
+      - ./reload-on-certificate.sh:/docker-entrypoint.d/40-reload-on-certificate.sh:ro
       - certbot-certs:/etc/letsencrypt:ro
       - certbot-webroot:/var/www/certbot
-    command:
-      - /bin/sh
-      - -c
-      - |
-        while sleep 60; do
-          if [ -f /var/www/certbot/.reload-nginx ]; then
-            nginx -s reload && rm -f /var/www/certbot/.reload-nginx
-          fi
-        done &
-        exec nginx -g 'daemon off;'
     networks:
       - proxy
 
