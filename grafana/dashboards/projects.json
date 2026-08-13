@@ -74,6 +74,44 @@
         {"id": "organize", "options": {"excludeByName": {"Time": true}, "indexByName": {"project": 0, "component": 1, "Value": 2}, "renameByName": {"Value": "HTTP code", "component": "Component", "project": "Project"}}}
       ],
       "type": "table"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"color": "blue", "text": "HTTP"}, "1": {"color": "green", "text": "HTTPS"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}, {"color": "green", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 23},
+      "id": 6,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "expr": "max by (project, component) (probe_http_ssl{job=\"blackbox-projects\",environment=~\"$environment\",project=~\"$project\"})", "legendFormat": "{{project}} / {{component}}", "range": true, "refId": "A"}],
+      "title": "Project transport",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "d", "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 14}, {"color": "green", "value": 30}]}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 23},
+      "id": 7,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"editorMode": "code", "expr": "(min by (project, component) (probe_ssl_earliest_cert_expiry{job=\"blackbox-projects\",environment=~\"$environment\",project=~\"$project\"}) - time()) / 86400", "legendFormat": "{{project}} / {{component}}", "range": true, "refId": "A"}],
+      "title": "TLS certificate validity remaining",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s", "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.5}, {"color": "red", "value": 2}]}}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 23},
+      "id": 8,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"editorMode": "code", "expr": "max by (project, component) (probe_duration_seconds{job=\"blackbox-projects\",environment=~\"$environment\",project=~\"$project\"})", "legendFormat": "{{project}} / {{component}}", "range": true, "refId": "A"}],
+      "title": "Current response time",
+      "type": "gauge"
     }
   ],
   "refresh": "30s",
@@ -123,5 +161,5 @@
   "timezone": "browser",
   "title": "Project Overview",
   "uid": "project-overview",
-  "version": 1
+  "version": 2
 }

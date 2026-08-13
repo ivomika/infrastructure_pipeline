@@ -91,6 +91,9 @@ Grafana автоматически формирует дашборд `Project Ov
 `grafana/prometheus/targets/projects.yml`. Используйте одинаковый `project` и
 `environment`, а в `component` укажите соответственно `backend` и `frontend`.
 Prometheus применяет изменения target-файла без перезапуска.
+Для HTTPS endpoints дашборд также показывает использование TLS, оставшийся срок
+сертификата и текущее время ответа. Для локальных HTTP endpoints TLS-панель срока
+действия остаётся без данных.
 
 Дашборд `Infrastructure Overview` показывает результат последнего запуска
 Certbot, время с последней успешной проверки и оставшийся срок действия общего
