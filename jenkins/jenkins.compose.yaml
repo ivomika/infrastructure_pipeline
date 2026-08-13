@@ -1,9 +1,16 @@
+x-jenkins-agent-images: &jenkins-agent-images
+  JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}
+  JENKINS_AGENT_JAVA_IMAGE: ${JENKINS_AGENT_JAVA_IMAGE:-devops-infra/jenkins-agent-java:1.0.0}
+  JENKINS_AGENT_NODE_IMAGE: ${JENKINS_AGENT_NODE_IMAGE:-devops-infra/jenkins-agent-node:1.0.0}
+  JENKINS_AGENT_FLUTTER_IMAGE: ${JENKINS_AGENT_FLUTTER_IMAGE:-devops-infra/jenkins-agent-flutter:1.0.0}
+
 services:
   jenkins-docker:
     image: docker:28.5.2-dind
     privileged: true
     restart: unless-stopped
     environment:
+      <<: *jenkins-agent-images
       DOCKER_TLS_CERTDIR: ""
       DOCKER_HOST: tcp://127.0.0.1:2375
     command:
@@ -31,17 +38,14 @@ services:
       jenkins-docker:
         condition: service_healthy
     environment:
+      <<: *jenkins-agent-images
       CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-change-me}
       JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
       JENKINS_DOCKER_HOST: tcp://jenkins-docker:2375
-      JENKINS_AGENT_SLAVE_IMAGE: devops-infra/jenkins-agent-slave:1.0.0
-      JENKINS_AGENT_JAVA_IMAGE: devops-infra/jenkins-agent-java:1.0.0
-      JENKINS_AGENT_NODE_IMAGE: devops-infra/jenkins-agent-node:1.0.0
-      JENKINS_AGENT_FLUTTER_IMAGE: devops-infra/jenkins-agent-flutter:1.0.0
     ports:
-      - "127.0.0.1:${JENKINS_HTTP_PORT:-8080}:8080"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8080}:8080"
     volumes:
       - jenkins-home:/var/jenkins_home
       - ./controller/casc:/var/jenkins_home/casc:ro

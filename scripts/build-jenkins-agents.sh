@@ -10,22 +10,33 @@ compose() {
   docker compose --env-file "$env_file" -f compose.yaml "$@"
 }
 
-compose exec -T jenkins-docker docker build \
-  --tag devops-infra/jenkins-agent-slave:1.0.0 \
-  --file /workspace/jenkins/agents/slave/dockerfile \
-  /workspace/jenkins/agents/slave
+compose exec -T jenkins-docker sh -c '
+  docker build \
+    --tag "$JENKINS_AGENT_SLAVE_IMAGE" \
+    --file /workspace/jenkins/agents/slave/dockerfile \
+    /workspace/jenkins/agents/slave
+'
 
-compose exec -T jenkins-docker docker build \
-  --tag devops-infra/jenkins-agent-java:1.0.0 \
-  --file /workspace/jenkins/agents/java/dockerfile \
-  /workspace/jenkins/agents/java
+compose exec -T jenkins-docker sh -c '
+  docker build \
+    --tag "$JENKINS_AGENT_JAVA_IMAGE" \
+    --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
+    --file /workspace/jenkins/agents/java/dockerfile \
+    /workspace/jenkins/agents/java
+'
 
-compose exec -T jenkins-docker docker build \
-  --tag devops-infra/jenkins-agent-node:1.0.0 \
-  --file /workspace/jenkins/agents/node/dockerfile \
-  /workspace/jenkins/agents/node
+compose exec -T jenkins-docker sh -c '
+  docker build \
+    --tag "$JENKINS_AGENT_NODE_IMAGE" \
+    --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
+    --file /workspace/jenkins/agents/node/dockerfile \
+    /workspace/jenkins/agents/node
+'
 
-compose exec -T jenkins-docker docker build \
-  --tag devops-infra/jenkins-agent-flutter:1.0.0 \
-  --file /workspace/jenkins/agents/flutter/dockerfile \
-  /workspace/jenkins/agents/flutter
+compose exec -T jenkins-docker sh -c '
+  docker build \
+    --tag "$JENKINS_AGENT_FLUTTER_IMAGE" \
+    --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
+    --file /workspace/jenkins/agents/flutter/dockerfile \
+    /workspace/jenkins/agents/flutter
+'

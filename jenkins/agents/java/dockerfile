@@ -1,7 +1,8 @@
 ARG MAVEN_VERSION=3.9.11
+ARG JENKINS_AGENT_SLAVE_IMAGE=devops-infra/jenkins-agent-slave:1.0.0
 
 FROM maven:${MAVEN_VERSION}-eclipse-temurin-21 AS maven
-FROM devops-infra/jenkins-agent-slave:1.0.0
+FROM ${JENKINS_AGENT_SLAVE_IMAGE}
 
 USER root
 

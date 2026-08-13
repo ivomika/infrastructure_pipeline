@@ -1,24 +1,30 @@
 services:
   slave:
-    image: devops-infra/jenkins-agent-slave:1.0.0
+    image: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}
     build:
       context: ./slave
       dockerfile: dockerfile
 
   java:
-    image: devops-infra/jenkins-agent-java:1.0.0
+    image: ${JENKINS_AGENT_JAVA_IMAGE:-devops-infra/jenkins-agent-java:1.0.0}
     build:
       context: ./java
       dockerfile: dockerfile
+      args:
+        JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}
 
   node:
-    image: devops-infra/jenkins-agent-node:1.0.0
+    image: ${JENKINS_AGENT_NODE_IMAGE:-devops-infra/jenkins-agent-node:1.0.0}
     build:
       context: ./node
       dockerfile: dockerfile
+      args:
+        JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}
 
   flutter:
-    image: devops-infra/jenkins-agent-flutter:1.0.0
+    image: ${JENKINS_AGENT_FLUTTER_IMAGE:-devops-infra/jenkins-agent-flutter:1.0.0}
     build:
       context: ./flutter
       dockerfile: dockerfile
+      args:
+        JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}

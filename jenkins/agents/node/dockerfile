@@ -1,8 +1,9 @@
 ARG NODE_VERSION=22.23.2
 ARG NPM_VERSION=10.9.8
+ARG JENKINS_AGENT_SLAVE_IMAGE=devops-infra/jenkins-agent-slave:1.0.0
 
 FROM node:${NODE_VERSION}-bookworm AS node
-FROM devops-infra/jenkins-agent-slave:1.0.0
+FROM ${JENKINS_AGENT_SLAVE_IMAGE}
 
 ARG NODE_VERSION
 ARG NPM_VERSION

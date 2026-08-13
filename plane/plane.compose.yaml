@@ -37,7 +37,7 @@ x-plane-app-env: &plane-app-env
   LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SECRET_KEY:-change-me-plane-live-secret}
   API_BASE_URL: http://api:8000
   DEBUG: 0
-  GUNICORN_WORKERS: 1
+  GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
   MINIO_ENDPOINT_SSL: 0
 
 services:
@@ -143,7 +143,7 @@ services:
 
   plane-db:
     image: postgres:15.7-alpine
-    command: postgres -c max_connections=1000
+    command: postgres -c max_connections=${PLANE_DB_MAX_CONNECTIONS:-1000}
     restart: unless-stopped
     environment:
       <<: *plane-db-env
@@ -190,7 +190,7 @@ services:
       LISTEN_HTTPS_PORT: 443
       SITE_ADDRESS: :80
       BUCKET_NAME: uploads
-      FILE_SIZE_LIMIT: 5242880
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
     depends_on:
       - web
       - api
@@ -198,7 +198,7 @@ services:
       - admin
       - live
     ports:
-      - "127.0.0.1:${PLANE_HTTP_PORT:-8081}:80"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${PLANE_HTTP_PORT:-8081}:80"
     volumes:
       - plane-proxy-config:/config
       - plane-proxy-data:/data
