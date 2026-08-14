@@ -1,8 +1,9 @@
 x-jenkins-agent-images: &jenkins-agent-images
-  JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-devops-infra/jenkins-agent-slave:1.0.0}
-  JENKINS_AGENT_JAVA_IMAGE: ${JENKINS_AGENT_JAVA_IMAGE:-devops-infra/jenkins-agent-java:1.0.0}
-  JENKINS_AGENT_NODE_IMAGE: ${JENKINS_AGENT_NODE_IMAGE:-devops-infra/jenkins-agent-node:1.0.0}
-  JENKINS_AGENT_FLUTTER_IMAGE: ${JENKINS_AGENT_FLUTTER_IMAGE:-devops-infra/jenkins-agent-flutter:1.0.0}
+  COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-devops-infra}
+  JENKINS_AGENT_SLAVE_IMAGE: ${JENKINS_AGENT_SLAVE_IMAGE:-jenkins-agent-slave:1.0.0}
+  JENKINS_AGENT_JAVA_IMAGE: ${JENKINS_AGENT_JAVA_IMAGE:-jenkins-agent-java:1.0.0}
+  JENKINS_AGENT_NODE_IMAGE: ${JENKINS_AGENT_NODE_IMAGE:-jenkins-agent-node:1.0.0}
+  JENKINS_AGENT_FLUTTER_IMAGE: ${JENKINS_AGENT_FLUTTER_IMAGE:-jenkins-agent-flutter:1.0.0}
 
 services:
   jenkins-docker:
@@ -29,7 +30,7 @@ services:
       - jenkins-egress
 
   jenkins-controller:
-    image: ${JENKINS_CONTROLLER_IMAGE:-devops-infra/jenkins-controller:1.0.0}
+    image: ${COMPOSE_PROJECT_NAME:-devops-infra}/${JENKINS_CONTROLLER_IMAGE:-jenkins-controller:1.0.0}
     build:
       context: ./controller
       dockerfile: dockerfile
@@ -38,12 +39,15 @@ services:
       jenkins-docker:
         condition: service_healthy
     environment:
-      <<: *jenkins-agent-images
       CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-change-me}
       JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
       JENKINS_DOCKER_HOST: tcp://jenkins-docker:2375
+      JENKINS_AGENT_SLAVE_IMAGE: ${COMPOSE_PROJECT_NAME:-devops-infra}/${JENKINS_AGENT_SLAVE_IMAGE:-jenkins-agent-slave:1.0.0}
+      JENKINS_AGENT_JAVA_IMAGE: ${COMPOSE_PROJECT_NAME:-devops-infra}/${JENKINS_AGENT_JAVA_IMAGE:-jenkins-agent-java:1.0.0}
+      JENKINS_AGENT_NODE_IMAGE: ${COMPOSE_PROJECT_NAME:-devops-infra}/${JENKINS_AGENT_NODE_IMAGE:-jenkins-agent-node:1.0.0}
+      JENKINS_AGENT_FLUTTER_IMAGE: ${COMPOSE_PROJECT_NAME:-devops-infra}/${JENKINS_AGENT_FLUTTER_IMAGE:-jenkins-agent-flutter:1.0.0}
     ports:
       - "${HOST_BIND_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8080}:8080"
     volumes:

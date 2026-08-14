@@ -12,14 +12,15 @@ compose() {
 
 compose exec -T jenkins-docker sh -c '
   docker build \
-    --tag "$JENKINS_AGENT_SLAVE_IMAGE" \
+    --tag "$COMPOSE_PROJECT_NAME/$JENKINS_AGENT_SLAVE_IMAGE" \
     --file /workspace/jenkins/agents/slave/dockerfile \
     /workspace/jenkins/agents/slave
 '
 
 compose exec -T jenkins-docker sh -c '
   docker build \
-    --tag "$JENKINS_AGENT_JAVA_IMAGE" \
+    --tag "$COMPOSE_PROJECT_NAME/$JENKINS_AGENT_JAVA_IMAGE" \
+    --build-arg COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
     --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
     --file /workspace/jenkins/agents/java/dockerfile \
     /workspace/jenkins/agents/java
@@ -27,7 +28,8 @@ compose exec -T jenkins-docker sh -c '
 
 compose exec -T jenkins-docker sh -c '
   docker build \
-    --tag "$JENKINS_AGENT_NODE_IMAGE" \
+    --tag "$COMPOSE_PROJECT_NAME/$JENKINS_AGENT_NODE_IMAGE" \
+    --build-arg COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
     --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
     --file /workspace/jenkins/agents/node/dockerfile \
     /workspace/jenkins/agents/node
@@ -35,7 +37,8 @@ compose exec -T jenkins-docker sh -c '
 
 compose exec -T jenkins-docker sh -c '
   docker build \
-    --tag "$JENKINS_AGENT_FLUTTER_IMAGE" \
+    --tag "$COMPOSE_PROJECT_NAME/$JENKINS_AGENT_FLUTTER_IMAGE" \
+    --build-arg COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
     --build-arg JENKINS_AGENT_SLAVE_IMAGE="$JENKINS_AGENT_SLAVE_IMAGE" \
     --file /workspace/jenkins/agents/flutter/dockerfile \
     /workspace/jenkins/agents/flutter
